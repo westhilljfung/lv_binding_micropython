@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 // Includes
 //////////////////////////////////////////////////////////////////////////////
+
 #include "../include/common.h"
 //#include "freertos/FreeRTOS.h"
 //#include "freertos/task.h"
@@ -133,16 +134,16 @@ STATIC mp_obj_t mp_activate_HX8357(mp_obj_t self_in)
    return mp_const_none;
 }
 
-STATIC void ili9431_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p);
+STATIC void hx8357_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p);
 
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_init_HX8357_obj, mp_init_HX8357);
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_activate_HX8357_obj, mp_activate_HX8357);
-DEFINE_PTR_OBJ(ili9431_flush);
+DEFINE_PTR_OBJ(hx8357_flush);
 
 STATIC const mp_rom_map_elem_t HX8357_locals_dict_table[] = {
    { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&mp_init_HX8357_obj) },
    { MP_ROM_QSTR(MP_QSTR_activate), MP_ROM_PTR(&mp_activate_HX8357_obj) },
-   { MP_ROM_QSTR(MP_QSTR_flush), MP_ROM_PTR(&PTR_OBJ(ili9431_flush)) },
+   { MP_ROM_QSTR(MP_QSTR_flush), MP_ROM_PTR(&PTR_OBJ(hx8357_flush)) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(HX8357_locals_dict, HX8357_locals_dict_table);
@@ -388,7 +389,7 @@ STATIC mp_obj_t mp_init_HX8357(mp_obj_t self_in)
 }
 
 
-STATIC void ili9431_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p)
+STATIC void hx8357_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p)
 {
 
    uint8_t data[4];
