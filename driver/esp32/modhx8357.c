@@ -11,15 +11,15 @@
 #include "lvgl/src/lv_hal/lv_hal_disp.h"
 
 //////////////////////////////////////////////////////////////////////////////
-// ILI9341 requires specific lv_conf resolution and color depth
+// HX8357 requires specific lv_conf resolution and color depth
 //////////////////////////////////////////////////////////////////////////////
 
 #if LV_COLOR_DEPTH != 16
-#error "modILI9341: LV_COLOR_DEPTH must be set to 16!"
+#error "modHX8357: LV_COLOR_DEPTH must be set to 16!"
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
-// ILI9341 Module definitions
+// HX8357 Module definitions
 //////////////////////////////////////////////////////////////////////////////
 #define HX8357_NOP                0x00  ///< No op
 #define HX8357_SWRESET            0x01  ///< software reset
@@ -90,7 +90,7 @@
 
 // Plan is to move this to GFX header (with different prefix), though
 // defines will be kept here for existing code that might be referencing
-// them. Some additional ones are in the ILI9341 lib -- add all in GFX!
+// them. Some additional ones are in the HX8357 lib -- add all in GFX!
 // Color definitions
 #define	HX8357_BLACK   0x0000 ///< BLACK color for drawing graphics
 #define	HX8357_BLUE    0x001F ///< BLUE color for drawing graphics
@@ -114,80 +114,80 @@ typedef struct {
     uint8_t rst;
     uint8_t backlight;
 
-} ILI9341_t;
+} HX8357_t;
 
 // Unfortunately, lvgl doesnt pass user_data to callbacks, so we use this global.
 // This means we can have only one active display driver instance, pointed by this global.
-STATIC ILI9341_t *g_ILI9341 = NULL;
+STATIC HX8357_t *g_HX8357 = NULL;
 
-STATIC mp_obj_t ILI9341_make_new(const mp_obj_type_t *type,
-                                 size_t n_args,
-                                 size_t n_kw,
-                                 const mp_obj_t *all_args);
+STATIC mp_obj_t HX8357_make_new(const mp_obj_type_t *type,
+				 size_t n_args,
+				 size_t n_kw,
+				 const mp_obj_t *all_args);
 
-STATIC mp_obj_t mp_init_ILI9341(mp_obj_t self_in);
+STATIC mp_obj_t mp_init_HX8357(mp_obj_t self_in);
 
-STATIC mp_obj_t mp_activate_ILI9341(mp_obj_t self_in)
+STATIC mp_obj_t mp_activate_HX8357(mp_obj_t self_in)
 {
-    ILI9341_t *self = MP_OBJ_TO_PTR(self_in);
-    g_ILI9341 = self;
+    HX8357_t *self = MP_OBJ_TO_PTR(self_in);
+    g_HX8357 = self;
     return mp_const_none;
 }
 
 STATIC void ili9431_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p);
 
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_init_ILI9341_obj, mp_init_ILI9341);
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_activate_ILI9341_obj, mp_activate_ILI9341);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_init_HX8357_obj, mp_init_HX8357);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_activate_HX8357_obj, mp_activate_HX8357);
 DEFINE_PTR_OBJ(ili9431_flush);
 
-STATIC const mp_rom_map_elem_t ILI9341_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&mp_init_ILI9341_obj) },
-    { MP_ROM_QSTR(MP_QSTR_activate), MP_ROM_PTR(&mp_activate_ILI9341_obj) },
+STATIC const mp_rom_map_elem_t HX8357_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&mp_init_HX8357_obj) },
+    { MP_ROM_QSTR(MP_QSTR_activate), MP_ROM_PTR(&mp_activate_HX8357_obj) },
     { MP_ROM_QSTR(MP_QSTR_flush), MP_ROM_PTR(&PTR_OBJ(ili9431_flush)) },
 };
 
-STATIC MP_DEFINE_CONST_DICT(ILI9341_locals_dict, ILI9341_locals_dict_table);
+STATIC MP_DEFINE_CONST_DICT(HX8357_locals_dict, HX8357_locals_dict_table);
 
-STATIC const mp_obj_type_t ILI9341_type = {
+STATIC const mp_obj_type_t HX8357_type = {
     { &mp_type_type },
-    .name = MP_QSTR_ILI9341,
-    //.print = ILI9341_print,
-    .make_new = ILI9341_make_new,
-    .locals_dict = (mp_obj_dict_t*)&ILI9341_locals_dict,
+    .name = MP_QSTR_HX8357,
+    //.print = HX8357_print,
+    .make_new = HX8357_make_new,
+    .locals_dict = (mp_obj_dict_t*)&HX8357_locals_dict,
 };
 
-STATIC mp_obj_t ILI9341_make_new(const mp_obj_type_t *type,
-                                 size_t n_args,
-                                 size_t n_kw,
-                                 const mp_obj_t *all_args)
+STATIC mp_obj_t HX8357_make_new(const mp_obj_type_t *type,
+				 size_t n_args,
+				 size_t n_kw,
+				 const mp_obj_t *all_args)
 {
     enum{
-         ARG_mhz,
-         ARG_spihost,
-         ARG_miso,
-         ARG_mosi,
-         ARG_clk,
-         ARG_cs,
-         ARG_dc,
-         ARG_rst,
-         ARG_backlight,
+	 ARG_mhz,
+	 ARG_spihost,
+	 ARG_miso,
+	 ARG_mosi,
+	 ARG_clk,
+	 ARG_cs,
+	 ARG_dc,
+	 ARG_rst,
+	 ARG_backlight,
     };
 
     static const mp_arg_t allowed_args[] = {
-        { MP_QSTR_mhz,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=40}},
-        { MP_QSTR_spihost,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=HSPI_HOST}},
-        { MP_QSTR_miso,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},             
-        { MP_QSTR_mosi,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
-        { MP_QSTR_clk,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
-        { MP_QSTR_cs,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
-        { MP_QSTR_dc,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
-        { MP_QSTR_rst,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
-        { MP_QSTR_backlight,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
+	{ MP_QSTR_mhz,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=40}},
+	{ MP_QSTR_spihost,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=HSPI_HOST}},
+	{ MP_QSTR_miso,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
+	{ MP_QSTR_mosi,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
+	{ MP_QSTR_clk,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
+	{ MP_QSTR_cs,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
+	{ MP_QSTR_dc,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
+	{ MP_QSTR_rst,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
+	{ MP_QSTR_backlight,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
     };
 
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all_kw_array(n_args, n_kw, all_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
-    ILI9341_t *self = m_new_obj(ILI9341_t);
+    HX8357_t *self = m_new_obj(HX8357_t);
     self->base.type = type;
     self->spi = NULL;
     self->mhz = args[ARG_mhz].u_int;
@@ -204,27 +204,27 @@ STATIC mp_obj_t ILI9341_make_new(const mp_obj_type_t *type,
 }
 
 
-STATIC const mp_rom_map_elem_t ILI9341_globals_table[] = {
-        { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_ILI9341) },
-        { MP_ROM_QSTR(MP_QSTR_display), (mp_obj_t)&ILI9341_type},
+STATIC const mp_rom_map_elem_t HX8357_globals_table[] = {
+	{ MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_HX8357) },
+	{ MP_ROM_QSTR(MP_QSTR_display), (mp_obj_t)&HX8357_type},
 };
-         
+
 
 STATIC MP_DEFINE_CONST_DICT (
-    mp_module_ILI9341_globals,
-    ILI9341_globals_table
+    mp_module_HX8357_globals,
+    HX8357_globals_table
 );
 
-const mp_obj_module_t mp_module_ILI9341 = {
+const mp_obj_module_t mp_module_HX8357 = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&mp_module_ILI9341_globals
+    .globals = (mp_obj_dict_t*)&mp_module_HX8357_globals
 };
 
 //////////////////////////////////////////////////////////////////////////////
-// ILI9341 driver implementation
+// HX8357 driver implementation
 //////////////////////////////////////////////////////////////////////////////
 
-STATIC void disp_spi_init(ILI9341_t *self)
+STATIC void disp_spi_init(HX8357_t *self)
 {
 	esp_err_t ret;
 
@@ -261,38 +261,38 @@ STATIC void disp_spi_init(ILI9341_t *self)
 	//Initialize the SPI bus
 	ret=spi_bus_initialize(self->spihost, &buscfg, 1);
     if (ret != ESP_OK) nlr_raise(
-        mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed initializing SPI bus"));
+	mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed initializing SPI bus"));
 
 	//Attach the LCD to the SPI bus
 	ret=spi_bus_add_device(self->spihost, &devcfg, &self->spi);
     if (ret != ESP_OK) nlr_raise(
-        mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding SPI device"));
+	mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding SPI device"));
 }
 
-STATIC void disp_spi_send(ILI9341_t *self, const uint8_t * data, uint16_t length)
+STATIC void disp_spi_send(HX8357_t *self, const uint8_t * data, uint16_t length)
 {
 	if (length == 0) return;           //no need to send anything
 
 	spi_transaction_t t;
-    memset(&t, 0, sizeof(t));       	//Zero out the transaction
+    memset(&t, 0, sizeof(t));		//Zero out the transaction
 	t.length = length * 8;              //Length is in bytes, transaction length is in bits.
 	t.tx_buffer = data;              //Data
 //	esp_err_t ret;
 //	ret=spi_device_transmit(spi, &t);  //Transmit!
-//	assert(ret==ESP_OK);            	 //Should have had no issues
+//	assert(ret==ESP_OK);			 //Should have had no issues
 	spi_device_queue_trans(self->spi, &t, portMAX_DELAY);
 
 	spi_transaction_t * rt;
 	spi_device_get_trans_result(self->spi, &rt, portMAX_DELAY);
 }
 
-STATIC void ili9441_send_cmd(ILI9341_t *self, uint8_t cmd)
+STATIC void ili9441_send_cmd(HX8357_t *self, uint8_t cmd)
 {
 	gpio_set_level(self->dc, 0);	 /*Command mode*/
 	disp_spi_send(self, &cmd, 1);
 }
 
-STATIC void ili9341_send_data(ILI9341_t *self, const void * data, uint16_t length)
+STATIC void hx8357_send_data(HX8357_t *self, const void * data, uint16_t length)
 {
 	gpio_set_level(self->dc, 1);	 /*Data mode*/
 	disp_spi_send(self, data, length);
@@ -312,7 +312,7 @@ STATIC const lcd_init_cmd_t ili_init_cmds[]={
     {HX8357_SETRGB, {0x80, 0x00, 0x06, 0x06}, 4},    // 0x80 enables SDO pin (0x00 disables)
     {HX8357D_SETCOM, {0x25}, 1},                      // -1.52V
     {HX8357_SETOSC, {0x68}, 1},                      // Normal mode 70Hz, Idle mode 55 Hz
-    {HX8357_SETPANEL, {0x00}, 1},                      // 
+    {HX8357_SETPANEL, {0x00}, 1},                      //
     {HX8357_SETPWR1, {
       0x00,                  // Not deep standby
       0x15,                      // BT
@@ -351,10 +351,10 @@ STATIC const lcd_init_cmd_t ili_init_cmds[]={
     {0, {0}, 0xff},                           // END OF COMMAND LIST
   };
 
-STATIC mp_obj_t mp_init_ILI9341(mp_obj_t self_in)
+STATIC mp_obj_t mp_init_HX8357(mp_obj_t self_in)
 {
-    ILI9341_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_activate_ILI9341(self_in);
+    HX8357_t *self = MP_OBJ_TO_PTR(self_in);
+    mp_activate_HX8357(self_in);
 
     disp_spi_init(self);
     gpio_pad_select_gpio(self->dc);
@@ -362,29 +362,29 @@ STATIC mp_obj_t mp_init_ILI9341(mp_obj_t self_in)
 
 	//Initialize non-SPI GPIOs
 	gpio_set_direction(self->dc, GPIO_MODE_OUTPUT);
-	gpio_set_direction(self->backlight, GPIO_MODE_OUTPUT);
+	if (self->backlight != -1) gpio_set_direction(self->backlight, GPIO_MODE_OUTPUT);
 
-	// printf("ILI9341 initialization.\n");
+	// printf("HX8357 initialization.\n");
 
 
 	//Send all the commands
 	uint16_t cmd = 0;
 	while (ili_init_cmds[cmd].databytes!=0xff) {
-                if (ili_init_cmds[cmd].cmd !=0xff) {
+		if (ili_init_cmds[cmd].cmd !=0xff) {
 		ili9441_send_cmd(self, ili_init_cmds[cmd].cmd);
 		}
 		if (ili_init_cmds[cmd].databytes & 0x80) {
 			vTaskDelay(ili_init_cmds[cmd].data[0]);
 		} else {
-			ili9341_send_data(self, ili_init_cmds[cmd].data, ili_init_cmds[cmd].databytes & 0x1F);
+			hx8357_send_data(self, ili_init_cmds[cmd].data, ili_init_cmds[cmd].databytes & 0x1F);
 		}
 		cmd++;
 	}
 
 	///Enable backlight
 	printf("Enable backlight.\n");
-	gpio_set_level(self->backlight, 1);
-    return mp_const_none;
+	if (self->backlight != -1) gpio_set_level(self->backlight, 1);
+	return mp_const_none;
 }
 
 
@@ -393,7 +393,7 @@ STATIC void ili9431_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area,
 
 	uint8_t data[4];
 
- 	ILI9341_t *self = g_ILI9341;
+	HX8357_t *self = g_HX8357;
 
 	/*Column addresses*/
 	ili9441_send_cmd(self, HX8357_CASET);
@@ -401,7 +401,7 @@ STATIC void ili9431_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area,
 	data[1] = area->x1 & 0xFF;
 	data[2] = (area->x2 >> 8) & 0xFF;
 	data[3] = area->x2 & 0xFF;
-	ili9341_send_data(self, data, 4);
+	hx8357_send_data(self, data, 4);
 
 	/*Page addresses*/
 	ili9441_send_cmd(self, HX8357_PASET);
@@ -409,35 +409,14 @@ STATIC void ili9431_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area,
 	data[1] = area->y1 & 0xFF;
 	data[2] = (area->y2 >> 8) & 0xFF;
 	data[3] = area->y2 & 0xFF;
-	ili9341_send_data(self, data, 4);
+	hx8357_send_data(self, data, 4);
 
 	/*Memory write*/
 	ili9441_send_cmd(self, HX8357_RAMWR);
 
 	uint32_t size = (area->x2 - area->x1 + 1) * (area->y2 - area->y1 + 1);
-	
-	/*Byte swapping is required*/
-	/*
-	uint32_t i;
-	uint8_t * color_u8 = (uint8_t *) color_p;
-	uint8_t color_tmp;
-	for(i = 0; i < size * 2; i += 2) {
-		color_tmp = color_u8[i + 1];
-		color_u8[i + 1] = color_u8[i];
-		color_u8[i] = color_tmp;
-		//printf("%d", color_tmp);
-	}
-	*/
-	ili9341_send_data(self, (void*)color_p, size * 2);
 
-	/*
-	while(size > LV_HOR_RES) {
-		ili9341_send_data((void*)color_p, LV_HOR_RES * 2);
-		//vTaskDelay(10 / portTICK_PERIOD_MS);
-		size -= LV_HOR_RES;
-		color_p += LV_HOR_RES;
-	}
-	ili9341_send_data((void*)color_p, size * 2);	*/ /*Send the remaining data*/
+	hx8357_send_data(self, (void*)color_p, size * 2);
 
 	lv_disp_flush_ready(disp_drv);
 }
