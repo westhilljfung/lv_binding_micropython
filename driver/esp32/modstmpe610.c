@@ -256,7 +256,7 @@ const mp_obj_module_t mp_module_STMPE610 = {
 // Module implementation
 //////////////////////////////////////////////////////////////////////////////
 STATIC void write_register(stmpe610_obj_t *self, const uint8_t reg, const uint8_t val) {
-   unit8_t data[2];
+   uint8_t data[2];
    data[0] = reg;
    data[1] = val;
   
@@ -274,7 +274,7 @@ STATIC void write_register(stmpe610_obj_t *self, const uint8_t reg, const uint8_
 
 STATIC uint8_t read_register_byte(stmpe610_obj_t *self, const uint8_t reg) {
    uint8_t data_read;
-   unit8_t data[2];
+   uint8_t data[2];
    data[0] = 0x80 | reg;
    data[1] = 0x00;
    data_read = 0;
@@ -293,16 +293,16 @@ STATIC uint8_t read_register_byte(stmpe610_obj_t *self, const uint8_t reg) {
    return data_read;
 }
 
-STATIC bool buffer_empty(stmpe610 *self) {
-   uint8_t data;
-   data = read_register_byte(self, STMPE_FIFO_STA)& STMPE_FIFO_STA_EMPTY;
-   return (bool)data;
+STATIC bool buffer_empty(stmpe610_obj_t *self) {
+  uint8_t data;
+  data = read_register_byte(self, STMPE_FIFO_STA)& STMPE_FIFO_STA_EMPTY;
+  return (bool)data;
 }
 
-STATIC bool touched(stmpe610 *self) {
-   uint8_t data;
-   data = read_register_byte(self, STMPE_TSC_CTRL) & 0x80;
-   return (bool)data;
+STATIC bool is_touched(stmpe610_obj_t *self) {
+  uint8_t data;
+  data = read_register_byte(self, STMPE_TSC_CTRL) & 0x80;
+  return (bool)data;
 }
 
 STATIC mp_obj_t mp_stmpe610_init(mp_obj_t self_in) {
@@ -361,14 +361,13 @@ STATIC mp_obj_t mp_stmpe610_init(mp_obj_t self_in) {
  * @return false: because no more data to be read
  */
 static bool stmpe610_read(lv_indev_data_t * data) {
-   stmpe610_obj_t *self = MP_OBJ_TO_PTR(g_stmpe610 );
+   stmpe610_obj_t *self = MP_OBJ_TO_PTR(g_STMPE610 );
    if (!self || (!self->spi)) {
       nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "stmpe610 instance needs to be created before callback is called!"));
    }
    static int16_t last_x = 0;
    static int16_t last_y = 0;
-   bool touched = touched(self);
-   uint8_t buf;
+   bool touched = is_touched(self);
 
    int16_t x = 0;
    int16_t y = 0;
@@ -376,15 +375,15 @@ static bool stmpe610_read(lv_indev_data_t * data) {
    uint8_t read_data[4];
    
    if(touched == true) {
-      for (uint8_t = 0; i < 4; i++) {
-	 read_data = read_register_byte(STMPE_TSC_DATA_XYZ);
+      for (uint8_t i = 0; i < 4; i++) {
+	read_data[i] = read_register_byte(self, STMPE_TSC_DATA_XYZ);
       }
-      x = data[0];
+      x = read_data[0];
       x <<= 4;
-      x |= (data[1] >> 4);
-      y = data[1] & 0x0F;
+      x |= (read_data[1] >> 4);
+      y = read_data[1] & 0x0F;
       y <<= 8;
-      y |= data[2];
+      y |= read_data[2];
       last_x = x;
       last_y = y;
    } else {
