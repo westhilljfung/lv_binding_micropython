@@ -134,15 +134,19 @@ STATIC mp_obj_t mp_activate_HX8357(mp_obj_t self_in)
    return mp_const_none;
 }
 
+STATIC spi_device_handle_t get_spi_HX8357();
+
 STATIC void ili9431_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p);
 
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_init_HX8357_obj, mp_init_HX8357);
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_activate_HX8357_obj, mp_activate_HX8357);
+DEFINE_PTR_OBJ(get_spi_HX8357);
 DEFINE_PTR_OBJ(ili9431_flush);
 
 STATIC const mp_rom_map_elem_t HX8357_locals_dict_table[] = {
    { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&mp_init_HX8357_obj) },
    { MP_ROM_QSTR(MP_QSTR_activate), MP_ROM_PTR(&mp_activate_HX8357_obj) },
+   { MP_ROM_QSTR(MP_QSTR_get_spi), MP_ROM_PTR(&PTR_OBJ(get_spi_HX8357)) },
    { MP_ROM_QSTR(MP_QSTR_flush), MP_ROM_PTR(&PTR_OBJ(ili9431_flush)) },
 };
 
@@ -267,6 +271,7 @@ STATIC void disp_spi_init(HX8357_t *self)
    ret=spi_bus_add_device(self->spihost, &devcfg, &self->spi);
    if (ret != ESP_OK) nlr_raise(
       mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding SPI device"));
+   printf("%d\n", self->spihost);
 }
 
 STATIC void disp_spi_send(HX8357_t *self, const uint8_t * data, uint16_t length)
@@ -420,3 +425,9 @@ STATIC void ili9431_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area,
 
    lv_disp_flush_ready(disp_drv);
 }
+
+STATIC spi_device_handle_t get_spi_HX8357() {
+   HX8357_t *self = g_HX8357;
+   return self->spi;
+}
+
