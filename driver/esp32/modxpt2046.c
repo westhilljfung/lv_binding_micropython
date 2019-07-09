@@ -177,11 +177,6 @@ STATIC mp_obj_t mp_xpt2046_init(mp_obj_t self_in)
 		.duty_cycle_pos=128,
 	};
 
-
-    gpio_set_direction(self->irq, GPIO_MODE_INPUT);
-    gpio_set_direction(self->cs, GPIO_MODE_OUTPUT);
-    gpio_set_level(self->cs, 1);
-
     //Attach the touch controller to the SPI bus
     ret=spi_bus_add_device(self->spihost, &devcfg, &self->spi);
     if (ret != ESP_OK) nlr_raise(

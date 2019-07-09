@@ -14,6 +14,7 @@
 //////////////////////////////////////////////////////////////////////////////
 // Defines
 //////////////////////////////////////////////////////////////////////////////
+
 /** STMPE610 Address **/
 #define STMPE_ADDR 0x41
 
@@ -130,14 +131,6 @@ typedef struct _stmpe610_obj_t {
    uint8_t cs;
    uint8_t irq;
 
-   int16_t x_min;
-   int16_t y_min;
-   int16_t x_max;
-   int16_t y_max;
-   bool x_inv;
-   bool y_inv;    
-   bool xy_swap;
-
    spi_device_handle_t spi;
 
 } stmpe610_obj_t;
@@ -191,14 +184,6 @@ STATIC mp_obj_t stmpe610_make_new(const mp_obj_type_t *type,
       ARG_spihost,
       ARG_cs,
       ARG_irq,
-
-      ARG_x_min,
-      ARG_y_min,
-      ARG_x_max,
-      ARG_y_max,
-      ARG_x_inv,
-      ARG_y_inv,
-      ARG_xy_swap,
    };
 
    static const mp_arg_t allowed_args[] = {
@@ -206,14 +191,6 @@ STATIC mp_obj_t stmpe610_make_new(const mp_obj_type_t *type,
       { MP_QSTR_spihost, MP_ARG_INT, {.u_int = HSPI_HOST}},
       { MP_QSTR_cs, MP_ARG_INT, {.u_int = 33}},
       { MP_QSTR_irq, MP_ARG_INT, {.u_int = 25}},
-
-      { MP_QSTR_x_min, MP_ARG_INT, {.u_int = 1000}},
-      { MP_QSTR_y_min, MP_ARG_INT, {.u_int = 1000}},
-      { MP_QSTR_x_max, MP_ARG_INT, {.u_int = 3200}},
-      { MP_QSTR_y_max, MP_ARG_INT, {.u_int = 2000}},
-      { MP_QSTR_x_inv, MP_ARG_BOOL, {.u_obj = mp_const_true}},
-      { MP_QSTR_y_inv, MP_ARG_BOOL, {.u_obj = mp_const_true}},
-      { MP_QSTR_xy_swap, MP_ARG_BOOL, {.u_obj = mp_const_false}},
    };
 
    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
@@ -225,14 +202,7 @@ STATIC mp_obj_t stmpe610_make_new(const mp_obj_type_t *type,
    self->spihost = args[ARG_spihost].u_int;
    self->cs = args[ARG_cs].u_int;
    self->irq = args[ARG_irq].u_int;
-
-   self->x_min = args[ARG_x_min].u_int;
-   self->y_min = args[ARG_y_min].u_int;
-   self->x_max = args[ARG_x_max].u_int;
-   self->y_max = args[ARG_y_max].u_int;
-   self->x_inv = args[ARG_x_inv].u_bool;
-   self->y_inv = args[ARG_y_inv].u_bool;
-   self->xy_swap = args[ARG_xy_swap].u_bool;
+   
    return MP_OBJ_FROM_PTR(self);
 }
 
@@ -256,14 +226,12 @@ const mp_obj_module_t mp_module_STMPE610 = {
 // Module implementation
 //////////////////////////////////////////////////////////////////////////////
 STATIC void write_register(stmpe610_obj_t *self, const uint8_t reg, const uint8_t val) {
-   uint8_t data[2];
-   data[0] = reg;
-   data[1] = val;
-  
+   printf("Write register\n");
    spi_transaction_t t;
    memset(&t, 0, sizeof(t));		//Zero out the transaction
-   t.length = 2 * 8;              //Length is in bytes, transaction length is in bits.
-   t.tx_buffer = data;
+   t.addr = reg;
+   t.length = 8;              //Length is in bytes, transaction length is in bits.
+   t.tx_buffer = &val;
 
    spi_device_queue_trans(self->spi, &t, portMAX_DELAY);
 
@@ -273,36 +241,52 @@ STATIC void write_register(stmpe610_obj_t *self, const uint8_t reg, const uint8_
 
 
 STATIC uint8_t read_register_byte(stmpe610_obj_t *self, const uint8_t reg) {
-   uint8_t data_read;
-   uint8_t data[2];
-   data[0] = 0x80 | reg;
-   data[1] = 0x00;
-   data_read = 0;
+   esp_err_t ret;
+
+   printf("Read register\n");
+   uint8_t data_read[4];
+   uint8_t i;
+   for (i =0; i < 3; i++) {
+      data_read[i] = 0;
+   }
    spi_transaction_t t;
    memset(&t, 0, sizeof(t));		//Zero out the transaction
-   t.length = 8;              //Length is in bytes, transaction length is in bits.
 
-   t.tx_buffer = data;
-   t.rx_buffer = &data_read;
+   t.cmd = (0x80 | reg);
+   t.addr = 0x00;
+   
+   t.rxlength = 4*8;              //Length is in bytes, transaction length is in bits.
+   t.rx_buffer = data_read;
 
    spi_device_queue_trans(self->spi, &t, portMAX_DELAY);
 
    spi_transaction_t * rt;
-   spi_device_get_trans_result(self->spi, &rt, portMAX_DELAY);
+   ret = spi_device_get_trans_result(self->spi, &rt, portMAX_DELAY);
+   if (ret != ESP_OK) {
+      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Read Register Failed"));
+   }
 
-   return data_read;
+   for (i =0; i < 3; i++) {
+      printf("Data %x\n", data_read[i]);
+   }
+   
+   return data_read[0];
 }
 
 STATIC bool buffer_empty(stmpe610_obj_t *self) {
-  uint8_t data;
-  data = read_register_byte(self, STMPE_FIFO_STA)& STMPE_FIFO_STA_EMPTY;
-  return (bool)data;
+   uint8_t data;
+   data = read_register_byte(self, STMPE_FIFO_STA) & STMPE_FIFO_STA_EMPTY;
+   write_register(self, 0x00, 0xff);
+   printf("empty %d\n", data);
+   return (bool)data;
 }
 
 STATIC bool is_touched(stmpe610_obj_t *self) {
-  uint8_t data;
-  data = read_register_byte(self, STMPE_TSC_CTRL) & 0x80;
-  return (bool)data;
+   uint8_t data;
+   data = read_register_byte(self, STMPE_TSC_CTRL) & 0x80;
+   write_register(self, 0x00, 0xff);
+   printf("touched %d\n", data);
+   return (bool)data;
 }
 
 STATIC mp_obj_t mp_stmpe610_init(mp_obj_t self_in) {
@@ -311,27 +295,58 @@ STATIC mp_obj_t mp_stmpe610_init(mp_obj_t self_in) {
    stmpe610_obj_t *self = MP_OBJ_TO_PTR(self_in);
    mp_activate_stmpe610(self_in);
 
+   /*  spi_bus_config_t buscfg={ */
+   /*    .miso_io_num=19, */
+   /*    .mosi_io_num=18, */
+   /*    .sclk_io_num=5, */
+   /*    .quadwp_io_num=-1, */
+   /*    .quadhd_io_num=-1, */
+   /*    .max_transfer_sz=128*1024, */
+   /* }; */
+   
    spi_device_interface_config_t devcfg = {
-      .clock_speed_hz=self->mhz*1000*1000, //Clock out at DISP_SPI_MHZ MHz
-      .mode=0,                             //SPI mode 0
-      .spics_io_num=self->cs,                    //CS pin is set manually
+      .clock_speed_hz=24*1000*1000, //Clock out at DISP_SPI_MHZ MHz
+      .mode=1,                             //SPI mode 0
+      .spics_io_num=32,                    //CS pin is set manually
       .queue_size=1,
       .pre_cb=NULL,
       .post_cb=NULL,
       .flags=SPI_DEVICE_HALFDUPLEX,
       .duty_cycle_pos=128,
+      .command_bits=8,
+      .address_bits=8,
    };
 
-   gpio_pad_select_gpio(self->irq);
-  
-   gpio_set_direction(self->irq, GPIO_MODE_INPUT);
+   /* gpio_pad_select_gpio(19); */
+   /* gpio_pad_select_gpio(18); */
+   /* gpio_pad_select_gpio(5); */
+
+   /* gpio_set_direction(19, GPIO_MODE_INPUT); */
+   /* gpio_set_pull_mode(19, GPIO_PULLUP_ONLY); */
+   /* gpio_set_direction(18, GPIO_MODE_OUTPUT); */
+   /* gpio_set_direction(5, GPIO_MODE_OUTPUT); */
+
+   /* gpio_pad_select_gpio(32); */
    
-   //Attach the touch controller to the SPI bus
-   ret=spi_bus_add_device(self->spihost, &devcfg, &self->spi);
+   /* //Initialize the SPI bus */
+   /* ret=spi_bus_initialize(HSPI_HOST, &buscfg, 1); */
+   /* if (ret != ESP_OK) { */
+   /*    nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed initializing SPI bus")); */
+   /* } */
+   
+   ret=spi_bus_add_device(HSPI_HOST, &devcfg, &self->spi);
    if (ret != ESP_OK) {
       nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding SPI device"));
    }
+      
+   uint16_t v;
+   // Serial.print("get version");
+   v = read_register_byte(self, 0x00);
+   v <<= 8;
+   v |= read_register_byte(self, 0x01);
 
+   printf("Version: %x\n", v);
+   
    write_register(self, STMPE_SYS_CTRL2, 0x0); // turn on clocks!
    write_register(self, STMPE_TSC_CTRL,
 		  STMPE_TSC_CTRL_XYZ | STMPE_TSC_CTRL_EN); // XYZ and enable!
@@ -361,6 +376,7 @@ STATIC mp_obj_t mp_stmpe610_init(mp_obj_t self_in) {
  * @return false: because no more data to be read
  */
 static bool stmpe610_read(lv_indev_data_t * data) {
+   printf("Read points\n");
    stmpe610_obj_t *self = MP_OBJ_TO_PTR(g_STMPE610 );
    if (!self || (!self->spi)) {
       nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "stmpe610 instance needs to be created before callback is called!"));
@@ -374,10 +390,11 @@ static bool stmpe610_read(lv_indev_data_t * data) {
 
    uint8_t read_data[4];
    
-   if(touched == true) {
+   if(touched == false) {
       for (uint8_t i = 0; i < 4; i++) {
-	read_data[i] = read_register_byte(self, STMPE_TSC_DATA_XYZ);
+	 read_data[i] = read_register_byte(self, STMPE_TSC_DATA_XYZ);
       }
+      write_register(self, 0x00, 0xff);
       x = read_data[0];
       x <<= 4;
       x |= (read_data[1] >> 4);
@@ -391,10 +408,15 @@ static bool stmpe610_read(lv_indev_data_t * data) {
       y = last_y;
    }
 
+   write_register(self, STMPE_INT_STA, 0xff);
+   
+   printf("Read points: %d, %d, %d\n",  data->point.x, data->point.y, data->state);
+   
    data->point.x = x;
    data->point.y = y;
    data->state = touched == false ? LV_INDEV_STATE_REL : LV_INDEV_STATE_PR;
-
+   
+   printf("Read points: %d, %d, %d\n",  data->point.x, data->point.y, data->state);
    return buffer_empty(self);
 }
 

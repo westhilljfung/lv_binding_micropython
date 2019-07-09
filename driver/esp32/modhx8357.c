@@ -362,12 +362,9 @@ STATIC mp_obj_t mp_init_HX8357(mp_obj_t self_in)
 
    disp_spi_init(self);
    gpio_pad_select_gpio(self->dc);
-   gpio_pad_select_gpio(self->backlight);
-
+   
    //Initialize non-SPI GPIOs
    gpio_set_direction(self->dc, GPIO_MODE_OUTPUT);
-   if (self->backlight != -1) gpio_set_direction(self->backlight, GPIO_MODE_OUTPUT);
-
    // printf("HX8357 initialization.\n");
 
 
@@ -385,9 +382,6 @@ STATIC mp_obj_t mp_init_HX8357(mp_obj_t self_in)
       cmd++;
    }
 
-   ///Enable backlight
-   printf("Enable backlight.\n");
-   if (self->backlight != -1) gpio_set_level(self->backlight, 1);
    return mp_const_none;
 }
 

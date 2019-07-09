@@ -49,8 +49,7 @@ STATIC mp_obj_t ILI9341_make_new(const mp_obj_type_t *type,
 
 STATIC mp_obj_t mp_init_ILI9341(mp_obj_t self_in);
 
-STATIC mp_obj_t mp_activate_ILI9341(mp_obj_t self_in)
-{
+STATIC mp_obj_t mp_activate_ILI9341(mp_obj_t self_in){
    ILI9341_t *self = MP_OBJ_TO_PTR(self_in);
    g_ILI9341 = self;
    return mp_const_none;
