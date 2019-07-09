@@ -271,7 +271,6 @@ STATIC void disp_spi_init(HX8357_t *self)
    ret=spi_bus_add_device(self->spihost, &devcfg, &self->spi);
    if (ret != ESP_OK) nlr_raise(
       mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding SPI device"));
-   printf("%d\n", self->spihost);
 }
 
 STATIC void disp_spi_send(HX8357_t *self, const uint8_t * data, uint16_t length)
