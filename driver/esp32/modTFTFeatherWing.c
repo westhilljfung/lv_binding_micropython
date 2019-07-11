@@ -294,39 +294,48 @@ STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
 					size_t n_kw,
 					const mp_obj_t *all_args)
 {
-   enum{
-      
+   enum{      
       ARG_spihost,
 	
       ARG_mhz,
       ARG_miso,
       ARG_mosi,
       ARG_clk,
-	
+
+      ARG_tcs,
+      ARG_dc,
+      ARG_rst,
+      ARG_backlight,
+
       ARG_rcs,
-      /* ARG_dc, */
-      /* ARG_rst, */
-      /* ARG_backlight, */
+      ARG_irq,
+      
+      ARG_scs,
    };
 
-   static const mp_arg_t allowed_args[] = {
-      
+   static const mp_arg_t allowed_args[] = {      
       { MP_QSTR_mhz,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=1}},
       { MP_QSTR_spihost,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=HSPI_HOST}},
 	
       { MP_QSTR_miso,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=19}},
       { MP_QSTR_mosi,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=18}},
       { MP_QSTR_clk,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=5}},
+
+      { MP_QSTR_tcs,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=15}},
+      { MP_QSTR_dc,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-33}},
+      { MP_QSTR_rst,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
+      { MP_QSTR_backlight,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
 	
       { MP_QSTR_rcs,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=32}},
-      /* { MP_QSTR_dc,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}}, */
-      /* { MP_QSTR_rst,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}}, */
-      /* { MP_QSTR_backlight,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}}, */
+      { MP_QSTR_irq,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
+      
+      { MP_QSTR_scs,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
    };
 
    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
    mp_arg_parse_all_kw_array(n_args, n_kw, all_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
    TFTFeatherWing_obj_t *self = m_new_obj(TFTFeatherWing_obj_t);
+   
    self->base.type = type;
    self->spi_ts = NULL;
    self->spi_tft = NULL;
@@ -338,13 +347,80 @@ STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
    self->miso = args[ARG_miso].u_int;
    self->mosi = args[ARG_mosi].u_int;
    self->clk = args[ARG_clk].u_int;
+
+   self->tcs = args[ARG_tcs].u_int;
+   self->dc = args[ARG_dc].u_int;
+   self->rst = args[ARG_rst].u_int;
+   self->backlight = args[ARG_backlight].u_int;
    
    self->rcs = args[ARG_rcs].u_int;
-   /* self->dc = args[ARG_dc].u_int; */
-   /* self->rst = args[ARG_rst].u_int; */
-   /* self->backlight = args[ARG_backlight].u_int; */
-
+   self->irq = args[ARG_irq].u_int;
+   
+   self->irq = args[ARG_irq].u_int;
+   
    return MP_OBJ_FROM_PTR(self);
+}
+
+STATIC void ts_init(TFTFeatherWing_obj_t *self);
+STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg);
+STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg, const uint8_t val);
+
+STATIC mp_obj_t mp_activate_TFTFeatherWing(mp_obj_t self_in) {
+   TFTFeatherWing_obj_t *self = MP_OBJ_TO_PTR(self_in);
+   g_TFTFeatherWing = self;
+   return mp_const_none;
+}
+
+STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
+   TFTFeatherWing_obj_t *self = MP_OBJ_TO_PTR(self_in);
+   mp_activate_TFTFeatherWing(self_in);
+   
+   esp_err_t ret;
+
+   //Initialize the SPI bus
+   spi_bus_config_t buscfg={
+      .miso_io_num=self->miso,
+      .mosi_io_num=self->mosi,
+      .sclk_io_num=self->clk,
+      .quadwp_io_num=-1,
+      .quadhd_io_num=-1,
+      .max_transfer_sz=128*1024,
+   };
+
+   ret=spi_bus_initialize(self->spihost, &buscfg, 1);
+   if (ret != ESP_OK) {
+      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed initializing SPI bus"));
+   }
+
+   ts_init(self);
+   
+   return mp_const_none;
+}
+STATIC void ts_init(TFTFeatherWing_obj_t *self) {
+   esp_err_t ret;
+//Attach the Touch Screen to the SPI bus
+   spi_device_interface_config_t devcfg={
+      .clock_speed_hz=self->mhz*1000*1000, //Clock out at DISP_SPI_MHZ MHz
+      .mode=0,                             //SPI mode 0
+      .spics_io_num=self->rcs,              //CS pin
+      .queue_size=1,
+      .pre_cb=NULL,
+      .post_cb=NULL,
+      .flags=SPI_DEVICE_HALFDUPLEX,
+      .duty_cycle_pos=128,
+      .command_bits=8,
+   };
+   
+   ret=spi_bus_add_device(self->spihost, &devcfg, &self->spi_ts);
+   if (ret != ESP_OK) {
+      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding SPI device"));
+   }
+   
+   uint16_t ts_version;
+   ts_version = ts_read_register_byte(self, 0);
+   ts_version <<= 8;
+   ts_version |= ts_read_register_byte(self, 1);
+   printf("TS Version %x\n", ts_version); 
 }
 
 STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg) {
@@ -394,59 +470,4 @@ STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg
       nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Transation"));
    }
 }
-
-STATIC mp_obj_t mp_activate_TFTFeatherWing(mp_obj_t self_in) {
-   TFTFeatherWing_obj_t *self = MP_OBJ_TO_PTR(self_in);
-   g_TFTFeatherWing = self;
-   return mp_const_none;
-}
-
-STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
-   TFTFeatherWing_obj_t *self = MP_OBJ_TO_PTR(self_in);
-   mp_activate_TFTFeatherWing(self_in);
-   
-   esp_err_t ret;
-
-   //Initialize the SPI bus
-   spi_bus_config_t buscfg={
-      .miso_io_num=self->miso,
-      .mosi_io_num=self->mosi,
-      .sclk_io_num=self->clk,
-      .quadwp_io_num=-1,
-      .quadhd_io_num=-1,
-      .max_transfer_sz=128*1024,
-   };
-
-   ret=spi_bus_initialize(self->spihost, &buscfg, 1);
-   if (ret != ESP_OK) {
-      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed initializing SPI bus"));
-   }
-
-   //Attach the LCDTouch Screen to the SPI bus
-   spi_device_interface_config_t devcfg={
-      .clock_speed_hz=self->mhz*1000*1000, //Clock out at DISP_SPI_MHZ MHz
-      .mode=0,                             //SPI mode 0
-      .spics_io_num=self->rcs,              //CS pin
-      .queue_size=1,
-      .pre_cb=NULL,
-      .post_cb=NULL,
-      .flags=SPI_DEVICE_HALFDUPLEX,
-      .duty_cycle_pos=128,
-      .command_bits=8,
-   };
-   
-   ret=spi_bus_add_device(self->spihost, &devcfg, &self->spi_ts);
-   if (ret != ESP_OK) {
-      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding SPI device"));
-   }
-   
-   uint16_t ts_version;
-   ts_version = ts_read_register_byte(self, 0);
-   ts_version <<= 8;
-   ts_version |= ts_read_register_byte(self, 1);
-   printf("TS Version %x\n", ts_version); 
-   
-   return mp_const_none;
-}
-
 
