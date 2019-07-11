@@ -1,7 +1,6 @@
-//////////////////////////////////////////////////////////////////////////////
-// Includes
-//////////////////////////////////////////////////////////////////////////////
-
+/**
+ * Includes
+ **/
 #include "../include/common.h"
 //#include "freertos/FreeRTOS.h"
 //#include "freertos/task.h"
@@ -10,17 +9,16 @@
 #include "driver/spi_master.h"
 #include "lvgl/src/lv_hal/lv_hal_disp.h"
 
-//////////////////////////////////////////////////////////////////////////////
-// ILI9341 requires specific lv_conf resolution and color depth
-//////////////////////////////////////////////////////////////////////////////
-
+/**
+ * ILI9341 requires specific lv_conf resolution and color depth
+ **/
 #if LV_COLOR_DEPTH != 16
 #error "modILI9341: LV_COLOR_DEPTH must be set to 16!"
 #endif
 
-//////////////////////////////////////////////////////////////////////////////
-// HX8357 Defines
-//////////////////////////////////////////////////////////////////////////////
+/**
+ * HX8357 Defines
+ **/
 #define HX8357_NOP                0x00  ///< No op
 #define HX8357_SWRESET            0x01  ///< software reset
 #define HX8357_RDDID              0x04  ///< Read ID
@@ -101,9 +99,9 @@
 #define HX8357_YELLOW  0xFFE0 ///< YELLOW color for drawing graphics
 #define HX8357_WHITE   0xFFFF ///< WHITE color for drawing graphics
 
-//////////////////////////////////////////////////////////////////////////////
-// STMPE610 Defines
-//////////////////////////////////////////////////////////////////////////////
+/**
+ * STMPE610 Defines
+ **/
 /** STMPE610 Address **/
 #define STMPE_ADDR 0x41
 
@@ -219,19 +217,22 @@ typedef struct {
    spi_device_handle_t spi_sd;
 
    uint8_t spihost;
-   uint8_t mhz;
    uint8_t miso;
    uint8_t mosi;
    uint8_t clk;
-  
+
+   uint8_t tft_mhz;
    uint8_t tcs;
    uint8_t dc;
    uint8_t rst;
    uint8_t backlight;
 
+   uint8_t ts_mhz;
    uint8_t rcs;
    uint8_t irq;
    
+
+   uint8_t sd_mhz;
    uint8_t scs;
   
 } TFTFeatherWing_obj_t;
@@ -240,6 +241,7 @@ typedef struct {
 // This means we can have only one active display driver instance, pointed by this global.
 STATIC TFTFeatherWing_obj_t *g_TFTFeatherWing = NULL;
 
+// Base Function Protopype
 STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
 					size_t n_args,
 					size_t n_kw,
@@ -286,9 +288,33 @@ const mp_obj_module_t mp_module_TFTFeatherWing = {
    .globals = (mp_obj_dict_t*)&mp_module_TFTFeatherWing_globals
 };
 
-//////////////////////////////////////////////////////////////////////////////
-// FTFFeatherWing driver implementation
-//////////////////////////////////////////////////////////////////////////////
+/**
+ * FTFFeatherWing driver implementation
+ **/
+
+/**
+ * Common Function Prototypr
+ **/
+STATIC void spi_bus_init(TFTFeatherWing_obj_t *self);
+
+/**
+ * TS Function Prototype
+ */
+STATIC void ts_init(TFTFeatherWing_obj_t *self);
+STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg);
+STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg, const uint8_t val);
+
+/**
+ * TFT Function Prototype
+ */
+STATIC void tft_init(TFTFeatherWing_obj_t *self);
+STATIC void tft_write(TFTFeatherWing_obj_t *self, const uint8_t * data, const uint16_t length);
+STATIC void tft_send_cmd(TFTFeatherWing_obj_t *self, uint8_t cmd);
+STATIC void tft_send_data(TFTFeatherWing_obj_t *self, const void * data, uint16_t length);
+
+/**
+ * Base Function
+ **/
 STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
 					size_t n_args,
 					size_t n_kw,
@@ -297,39 +323,45 @@ STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
    enum{      
       ARG_spihost,
 	
-      ARG_mhz,
       ARG_miso,
       ARG_mosi,
       ARG_clk,
 
+      ARG_tft_mhz,
       ARG_tcs,
       ARG_dc,
       ARG_rst,
       ARG_backlight,
 
+      ARG_ts_mhz,
       ARG_rcs,
       ARG_irq,
-      
+
+      ARG_sd_mhz,
       ARG_scs,
    };
 
    static const mp_arg_t allowed_args[] = {      
-      { MP_QSTR_mhz,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=1}},
       { MP_QSTR_spihost,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=HSPI_HOST}},
 	
       { MP_QSTR_miso,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=19}},
       { MP_QSTR_mosi,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=18}},
       { MP_QSTR_clk,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=5}},
 
+      
+      { MP_QSTR_tft_mhz,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=24}},
       { MP_QSTR_tcs,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=15}},
       { MP_QSTR_dc,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-33}},
       { MP_QSTR_rst,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
       { MP_QSTR_backlight,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
-	
+
+      
+      { MP_QSTR_ts_mhz,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=1}},
       { MP_QSTR_rcs,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=32}},
       { MP_QSTR_irq,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
       
-      { MP_QSTR_scs,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
+      { MP_QSTR_sd_mhz,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=1}},
+      { MP_QSTR_scs,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=14}},
    };
 
    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
@@ -342,28 +374,26 @@ STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
    self->spi_sd = NULL;
 
    self->spihost = args[ARG_spihost].u_int;
-   self->mhz = args[ARG_mhz].u_int;
    
    self->miso = args[ARG_miso].u_int;
    self->mosi = args[ARG_mosi].u_int;
    self->clk = args[ARG_clk].u_int;
 
+   self->tft_mhz = args[ARG_tft_mhz].u_int;
    self->tcs = args[ARG_tcs].u_int;
    self->dc = args[ARG_dc].u_int;
    self->rst = args[ARG_rst].u_int;
    self->backlight = args[ARG_backlight].u_int;
    
+   self->ts_mhz = args[ARG_ts_mhz].u_int;
    self->rcs = args[ARG_rcs].u_int;
    self->irq = args[ARG_irq].u_int;
    
+   self->sd_mhz = args[ARG_sd_mhz].u_int;
    self->irq = args[ARG_irq].u_int;
    
    return MP_OBJ_FROM_PTR(self);
 }
-
-STATIC void ts_init(TFTFeatherWing_obj_t *self);
-STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg);
-STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg, const uint8_t val);
 
 STATIC mp_obj_t mp_activate_TFTFeatherWing(mp_obj_t self_in) {
    TFTFeatherWing_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -374,7 +404,18 @@ STATIC mp_obj_t mp_activate_TFTFeatherWing(mp_obj_t self_in) {
 STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    TFTFeatherWing_obj_t *self = MP_OBJ_TO_PTR(self_in);
    mp_activate_TFTFeatherWing(self_in);
+     
+   spi_bus_init(self);
+   ts_init(self);
+   tft_init(self);
    
+   return mp_const_none;
+}
+
+/**
+ * Common Function
+ **/
+STATIC void spi_bus_init(TFTFeatherWing_obj_t *self) {
    esp_err_t ret;
 
    //Initialize the SPI bus
@@ -391,16 +432,17 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    if (ret != ESP_OK) {
       nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed initializing SPI bus"));
    }
-
-   ts_init(self);
-   
-   return mp_const_none;
 }
+
+/**
+ * TS Function
+ */
 STATIC void ts_init(TFTFeatherWing_obj_t *self) {
    esp_err_t ret;
-//Attach the Touch Screen to the SPI bus
+   
+   //Attach the Touch Screen to the SPI bus
    spi_device_interface_config_t devcfg={
-      .clock_speed_hz=self->mhz*1000*1000, //Clock out at DISP_SPI_MHZ MHz
+      .clock_speed_hz=self->ts_mhz*1000*1000, //Clock out at DISP_SPI_MHZ MHz
       .mode=0,                             //SPI mode 0
       .spics_io_num=self->rcs,              //CS pin
       .queue_size=1,
@@ -420,11 +462,31 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
    ts_version = ts_read_register_byte(self, 0);
    ts_version <<= 8;
    ts_version |= ts_read_register_byte(self, 1);
-   printf("TS Version %x\n", ts_version); 
+   printf("TS Version %x\n", ts_version);
+
+   // Initialize STMPE610
+   ts_write_register_byte(self, STMPE_SYS_CTRL2, 0x0); // turn on clocks!
+   ts_write_register_byte(self, STMPE_TSC_CTRL,
+			  STMPE_TSC_CTRL_XYZ | STMPE_TSC_CTRL_EN); // XYZ and enable!
+   ts_write_register_byte(self, STMPE_INT_EN, STMPE_INT_EN_TOUCHDET);
+   ts_write_register_byte(self, STMPE_ADC_CTRL1, STMPE_ADC_CTRL1_10BIT |
+			  (0x6 << 4)); // 96 clocks per conversion
+   ts_write_register_byte(self, STMPE_ADC_CTRL2, STMPE_ADC_CTRL2_6_5MHZ);
+   ts_write_register_byte(self, STMPE_TSC_CFG, STMPE_TSC_CFG_4SAMPLE |
+			  STMPE_TSC_CFG_DELAY_1MS |
+			  STMPE_TSC_CFG_SETTLE_5MS);
+   ts_write_register_byte(self, STMPE_TSC_FRACTION_Z, 0x6);
+   ts_write_register_byte(self, STMPE_FIFO_TH, 1);
+   ts_write_register_byte(self, STMPE_FIFO_STA, STMPE_FIFO_STA_RESET);
+   ts_write_register_byte(self, STMPE_FIFO_STA, 0); // unreset
+   ts_write_register_byte(self, STMPE_TSC_I_DRIVE, STMPE_TSC_I_DRIVE_50MA);
+   ts_write_register_byte(self, STMPE_INT_STA, 0xFF); // reset all ints
+   ts_write_register_byte(self, STMPE_INT_CTRL,
+			  STMPE_INT_CTRL_POL_HIGH | STMPE_INT_CTRL_ENABLE);
 }
 
 STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg) {
-   printf("Read register\n");
+   printf("Read TS register\n");
    esp_err_t ret;
  
    spi_transaction_t t;
@@ -449,7 +511,7 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
 }
 
 STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg, const uint8_t val) {
-   printf("Read register\n");
+   printf("Write TS register\n");
    esp_err_t ret;
  
    spi_transaction_t t;
@@ -471,3 +533,126 @@ STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg
    }
 }
 
+/**
+ * TFT Function
+ */
+/*The LCD needs a bunch of command/argument values to be initialized. They are stored in this struct. */
+typedef struct {
+   uint8_t cmd;
+   uint8_t data[34];
+   uint8_t databytes; //No of data in data; bit 7 = delay after set; 0xFF = end of cmds.
+} lcd_init_cmd_t;
+
+STATIC void tft_init(TFTFeatherWing_obj_t *self) {
+    esp_err_t ret;
+   
+   //Attach the TFT to the SPI bus
+   spi_device_interface_config_t devcfg={
+      .clock_speed_hz=self->tft_mhz*1000*1000, //Clock out at DISP_SPI_MHZ MHz
+      .mode=0,                             //SPI mode 0
+      .spics_io_num=self->tcs,              //CS pin
+      .queue_size=1,
+      .pre_cb=NULL,
+      .post_cb=NULL,
+      .flags=SPI_DEVICE_HALFDUPLEX,
+      .duty_cycle_pos=128,
+   };
+   
+   ret=spi_bus_add_device(self->spihost, &devcfg, &self->spi_tft);
+   if (ret != ESP_OK) {
+      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding SPI device"));
+   }
+
+   const lcd_init_cmd_t ili_init_cmds[]={
+      {HX8357_SWRESET, {10}, 0x80}, // Soft reset, then delay 10 ms
+      {HX8357D_SETC, {0xFF, 0x83, 0x57}, 3},
+      {0xFF, {300}, 0x80},          // No command, just delay 300 ms
+      {HX8357_SETRGB, {0x80, 0x00, 0x06, 0x06}, 4},    // 0x80 enables SDO pin (0x00 disables)
+      {HX8357D_SETCOM, {0x25}, 1},                      // -1.52V
+      {HX8357_SETOSC, {0x68}, 1},                      // Normal mode 70Hz, Idle mode 55 Hz
+      {HX8357_SETPANEL, {0x00}, 1},                      //
+      {HX8357_SETPWR1, {
+	    0x00,                  // Not deep standby
+	    0x15,                      // BT
+	    0x1C,                      // VSPR
+	    0x1C,                      // VSNR
+	    0x83,                      // AP
+	    0xAA}, 6},                      // FS
+      {HX8357D_SETSTBA, {
+	    0x50,                      // OPON normal
+	    0x50,                      // OPON idle
+	    0x01,                      // STBA
+	    0x3C,                      // STBA
+	    0x1E,                      // STBA
+	    0x08}, 6},                      // GEN
+      {HX8357D_SETCYC, {
+	    0x02,                      // NW 0x02
+	    0x40,                      // RTN
+	    0x00,                      // DIV
+	    0x2A,                      // DUM
+	    0x2A,                      // DUM
+	    0x0D,                      // GDON
+	    0x78}, 7},                      // GDOFF
+      {HX8357D_SETGAMMA, {
+	    0x02, 0x0A, 0x11, 0x1d, 0x23, 0x35, 0x41, 0x4b, 0x4b,
+	    0x42, 0x3A, 0x27, 0x1B, 0x08, 0x09, 0x03, 0x02, 0x0A,
+	    0x11, 0x1d, 0x23, 0x35, 0x41, 0x4b, 0x4b, 0x42, 0x3A,
+	    0x27, 0x1B, 0x08, 0x09, 0x03, 0x00, 0x01}, 34},
+      {0x53, {0x04}, 1},
+      {HX8357_COLMOD, {0x55}, 1},                      // 16 bit
+      {HX8357_MADCTL, {0xC0}, 1},
+      {HX8357_TEON, {0x00}, 1},                      // TW off
+      {HX8357_TEARLINE, {0x00, 0x02}, 2},
+      {HX8357_SLPOUT, {150}, 0x80}, // Exit Sleep, then delay 150 ms
+      {HX8357_MADCTL, {0xe8}, 1},
+      {HX8357_DISPON, {50}, 0x80}, // Main screen turn on, delay 50 ms
+      {0, {0}, 0xff},                           // END OF COMMAND LIST
+   };
+   
+   //Send all the commands
+   uint16_t cmd = 0;
+   while (ili_init_cmds[cmd].databytes!=0xff) {
+      if (ili_init_cmds[cmd].cmd !=0xff) {
+	 tft_send_cmd(self, ili_init_cmds[cmd].cmd);
+      }
+      if (ili_init_cmds[cmd].databytes & 0x80) {
+	 vTaskDelay(ili_init_cmds[cmd].data[0]/portTICK_PERIOD_MS);
+      } else {
+	 tft_send_data(self, ili_init_cmds[cmd].data, ili_init_cmds[cmd].databytes & 0x1F);
+      }
+      cmd++;
+   }
+}
+
+STATIC void tft_write_data(TFTFeatherWing_obj_t *self, const uint8_t * data, const uint16_t length) {
+   if (length == 0) {
+      return;           //no need to send anything
+   }
+   
+   esp_err_t ret;
+   
+   spi_transaction_t t;
+   memset(&t, 0, sizeof(t));		//Zero out the transaction
+   t.length = length * 8;              //Length is in bytes, transaction length is in bits.
+   t.tx_buffer = data;              //Data
+   
+   spi_device_queue_trans(self->spi_tft, &t, portMAX_DELAY);
+
+   spi_transaction_t * rt;
+   ret = spi_device_get_trans_result(self->spi_tft, &rt, portMAX_DELAY);
+   if (ret != ESP_OK) {
+      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding SPI device"));
+   }
+}
+
+STATIC void tft_send_cmd(TFTFeatherWing_obj_t *self, const uint8_t cmd) {
+   gpio_set_level(self->dc, 0);	 /*Command mode*/
+   tft_write(self, &cmd, 1);
+   gpio_set_level(self->dc, 1);
+}
+
+STATIC void tft_send_data(TFTFeatherWing_obj_t *self, const void * data, const uint16_t length) {
+   gpio_set_level(self->dc, 1);	 // Data mode
+   tft_write(self, data, length);
+   gpio_set_level(self->dc, 1);
+}
