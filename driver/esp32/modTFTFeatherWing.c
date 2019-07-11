@@ -214,7 +214,9 @@
 typedef struct {
    mp_obj_base_t base;
   
-   spi_device_handle_t spi;
+   spi_device_handle_t spi_tft;
+   spi_device_handle_t spi_ts;
+   spi_device_handle_t spi_sd;
 
    uint8_t spihost;
    uint8_t mhz;
@@ -326,7 +328,9 @@ STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
    mp_arg_parse_all_kw_array(n_args, n_kw, all_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
    TFTFeatherWing_obj_t *self = m_new_obj(TFTFeatherWing_obj_t);
    self->base.type = type;
-   self->spi = NULL;
+   self->spi_ts = NULL;
+   self->spi_tft = NULL;
+   self->spi_sd = NULL;
 
    self->spihost = args[ARG_spihost].u_int;
    self->mhz = args[ARG_mhz].u_int;
@@ -343,32 +347,32 @@ STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
    return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC uint8_t read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg) {
+STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg) {
    printf("Read register\n");
    esp_err_t ret;
  
    spi_transaction_t t;
-   uint8_t read_data[4];
+   uint8_t read_data[1];
 
    memset(&t, 0, sizeof(t));		//Zero out the transaction
    t.cmd = (reg | 0x80);
    printf("CMD %x\n", t.cmd);
-   t.rxlength = 64;              //Length is in bytes, transaction length is in bits.
+   t.rxlength = 8;              //Length is in bytes, transaction length is in bits.
    t.rx_buffer = read_data;
 
-   spi_device_queue_trans(self->spi, &t, portMAX_DELAY);
+   spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
 
    spi_transaction_t * rt;
-   ret=spi_device_get_trans_result(self->spi, &rt, portMAX_DELAY);
+   ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
    if (ret != ESP_OK) {
       nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Transation"));
    }
-   printf("Read Data: %x %x %x %x\n", read_data[0],read_data[1],read_data[2],read_data[3]);
+   printf("Read Data: %x\n", read_data[0]);
 
    return read_data[0];
 }
 
-STATIC void write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg, const uint8_t val) {
+STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg, const uint8_t val) {
    printf("Read register\n");
    esp_err_t ret;
  
@@ -382,10 +386,10 @@ STATIC void write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg, c
    t.length = 8;              //Length is in bytes, transaction length is in bits.
    t.tx_buffer = write_data;
 
-   spi_device_queue_trans(self->spi, &t, portMAX_DELAY);
+   spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
 
    spi_transaction_t * rt;
-   ret=spi_device_get_trans_result(self->spi, &rt, portMAX_DELAY);
+   ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
    if (ret != ESP_OK) {
       nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Transation"));
    }
@@ -403,6 +407,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    
    esp_err_t ret;
 
+   //Initialize the SPI bus
    spi_bus_config_t buscfg={
       .miso_io_num=self->miso,
       .mosi_io_num=self->mosi,
@@ -412,6 +417,12 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .max_transfer_sz=128*1024,
    };
 
+   ret=spi_bus_initialize(self->spihost, &buscfg, 1);
+   if (ret != ESP_OK) {
+      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed initializing SPI bus"));
+   }
+
+   //Attach the LCDTouch Screen to the SPI bus
    spi_device_interface_config_t devcfg={
       .clock_speed_hz=self->mhz*1000*1000, //Clock out at DISP_SPI_MHZ MHz
       .mode=0,                             //SPI mode 0
@@ -423,24 +434,17 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .duty_cycle_pos=128,
       .command_bits=8,
    };
-
-   //Initialize the SPI bus
-   ret=spi_bus_initialize(self->spihost, &buscfg, 0);
-   if (ret != ESP_OK) {
-      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed initializing SPI bus"));
-   }
-
-   //Attach the LCD to the SPI bus
-   ret=spi_bus_add_device(self->spihost, &devcfg, &self->spi);
+   
+   ret=spi_bus_add_device(self->spihost, &devcfg, &self->spi_ts);
    if (ret != ESP_OK) {
       nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding SPI device"));
    }
    
-   uint16_t version;
-   version = read_register_byte(self, 0);
-   version <<= 8;
-   version |= read_register_byte(self, 1);
-   printf("Version %x\n", version); 
+   uint16_t ts_version;
+   ts_version = ts_read_register_byte(self, 0);
+   ts_version <<= 8;
+   ts_version |= ts_read_register_byte(self, 1);
+   printf("TS Version %x\n", ts_version); 
    
    return mp_const_none;
 }
