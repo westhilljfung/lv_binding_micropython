@@ -301,7 +301,7 @@ STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
       ARG_mosi,
       ARG_clk,
 	
-      /* ARG_cs, */
+      ARG_rcs,
       /* ARG_dc, */
       /* ARG_rst, */
       /* ARG_backlight, */
@@ -316,7 +316,7 @@ STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
       { MP_QSTR_mosi,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=18}},
       { MP_QSTR_clk,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=5}},
 	
-      /* { MP_QSTR_cs,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}}, */
+      { MP_QSTR_rcs,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=32}},
       /* { MP_QSTR_dc,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}}, */
       /* { MP_QSTR_rst,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}}, */
       /* { MP_QSTR_backlight,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}}, */
@@ -335,7 +335,7 @@ STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
    self->mosi = args[ARG_mosi].u_int;
    self->clk = args[ARG_clk].u_int;
    
-   /* self->cs = args[ARG_cs].u_int; */
+   self->rcs = args[ARG_rcs].u_int;
    /* self->dc = args[ARG_dc].u_int; */
    /* self->rst = args[ARG_rst].u_int; */
    /* self->backlight = args[ARG_backlight].u_int; */
@@ -349,16 +349,13 @@ STATIC uint8_t read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg)
  
    spi_transaction_t t;
    uint8_t read_data[4];
-   uint8_t write_data[1];
 
-   write_data[0] = (reg | 0x80);
    memset(&t, 0, sizeof(t));		//Zero out the transaction
    t.cmd = (reg | 0x80);
    printf("CMD %x\n", t.cmd);
    t.rxlength = 64;              //Length is in bytes, transaction length is in bits.
    t.rx_buffer = read_data;
 
-   //gpio_set_level(32, 0);
    spi_device_queue_trans(self->spi, &t, portMAX_DELAY);
 
    spi_transaction_t * rt;
@@ -416,16 +413,15 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    };
 
    spi_device_interface_config_t devcfg={
-      .clock_speed_hz=1000*1000, //Clock out at DISP_SPI_MHZ MHz
+      .clock_speed_hz=self->mhz*1000*1000, //Clock out at DISP_SPI_MHZ MHz
       .mode=0,                             //SPI mode 0
-      .spics_io_num=32,              //CS pin
+      .spics_io_num=self->rcs,              //CS pin
       .queue_size=1,
       .pre_cb=NULL,
       .post_cb=NULL,
       .flags=SPI_DEVICE_HALFDUPLEX,
       .duty_cycle_pos=128,
       .command_bits=8,
-      //.address_bits=7,
    };
 
    //Initialize the SPI bus
@@ -441,10 +437,8 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    }
    
    uint16_t version;
-   //write_register_byte(self, 0x00, 0x00);
    version = read_register_byte(self, 0);
    version <<= 8;
-   //write_register_byte(self, 0x00, 0x00);
    version |= read_register_byte(self, 1);
    printf("Version %x\n", version); 
    
