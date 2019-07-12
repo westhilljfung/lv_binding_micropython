@@ -448,7 +448,7 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
    spi_device_interface_config_t devcfg_ts={
       .clock_speed_hz=1000*1000, //Clock out at DISP_SPI_MHZ MHz
       .mode=0,                             //SPI mode 0
-      .spics_io_num=-1,              //CS pin
+      .spics_io_num=32,              //CS pin
       .queue_size=1,
       .pre_cb=NULL,
       .post_cb=NULL,
@@ -458,9 +458,9 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
       //.dummy_bits=8,
    };
 
-   gpio_pad_select_gpio(32);
-   gpio_set_direction(32, GPIO_MODE_OUTPUT);
-   gpio_set_level(32, 1);
+   /* gpio_pad_select_gpio(32); */
+   /* gpio_set_direction(32, GPIO_MODE_OUTPUT); */
+   /* gpio_set_level(32, 1); */
    
    ret=spi_bus_add_device(self->spihost, &devcfg_ts, &self->spi_ts);
    if (ret != ESP_OK) {
@@ -469,7 +469,7 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
    
    uint16_t ts_version;
 
-   gpio_set_level(32, 0);
+   /* gpio_set_level(32, 0); */
    ts_version = ts_read_register_byte(self, 0);
     
    /* gpio_set_level(32, 1);    */
@@ -479,7 +479,7 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
    ts_version |= ts_read_register_byte(self, 1);
    printf("TS Version %x\n", ts_version);
 
-   gpio_set_level(32, 1);
+   /* gpio_set_level(32, 1); */
 
    // Initialize STMPE610
    ts_write_register_byte(self, STMPE_SYS_CTRL2, 0x0); // turn on clocks!
