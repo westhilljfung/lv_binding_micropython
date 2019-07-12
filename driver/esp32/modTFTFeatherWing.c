@@ -408,7 +408,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
      
    spi_bus_init(self);
    tft_init(self);
-   ts_init(self);
+   //ts_init(self);
    
    return mp_const_none;
 }
@@ -451,7 +451,7 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
       .post_cb=NULL,
       .flags=SPI_DEVICE_HALFDUPLEX,
       .duty_cycle_pos=128,
-      .command_bits=8,
+      .command_bits=16,
    };
    
    ret=spi_bus_add_device(self->spihost, &devcfg, &self->spi_ts);
@@ -495,6 +495,7 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
 
    memset(&t, 0, sizeof(t));		//Zero out the transaction
    t.cmd = (reg | 0x80);
+   t.cmd <<= 8;
    printf("CMD %x\n", t.cmd);
    t.rxlength = 8;              //Length is in bytes, transaction length is in bits.
    t.rx_buffer = read_data;
