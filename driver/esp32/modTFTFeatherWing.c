@@ -623,7 +623,7 @@ STATIC void tft_init(TFTFeatherWing_obj_t *self) {
       }
       cmd++;
    }
-   printf("End TFT Init\n")
+   printf("End TFT Init\n");
 }
 
 STATIC void tft_write(TFTFeatherWing_obj_t *self, const uint8_t * data, const uint16_t length) {
