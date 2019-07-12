@@ -411,7 +411,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
      
    spi_bus_init(self);
    ts_init(self);
-   tft_init(self);
+   //tft_init(self);
    
    return mp_const_none;
 }
@@ -503,9 +503,10 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
 
    memset(&t, 0, sizeof(t));		//Zero out the transaction
    //t.cmd = (reg | 0x80);
-   printf("CMD %x\n", t.cmd);
+   //printf("CMD %x\n", t.cmd);
    write_data[0] = (reg | 0x80);
    t.tx_buffer = write_data;
+   printf("CMD %x\n",write_data[0]);
    t.length = 8;
    t.rxlength = 16;              //Length is in bytes, transaction length is in bits.
    t.rx_buffer = read_data;
