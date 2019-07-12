@@ -508,18 +508,19 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
    esp_err_t ret;
  
    spi_transaction_t t;
-   uint8_t read_data[2];
-   uint8_t write_data[2];
+   uint8_t read_data[4];
+   uint8_t write_data[4];
 
    memset(&t, 0, sizeof(t));		//Zero out the transaction
    //t.cmd = (reg | 0x80);
    //printf("CMD %x\n", t.cmd);
    write_data[0] = (reg | 0x80);
    write_data[1] = (reg | 0x80);
+   write_data[2] = (reg | 0x80);
+   write_data[3] = (reg | 0x80);
    t.tx_buffer = write_data;
    printf("CMD %x\n",write_data[0]);
-   t.length = 16;
-   t.rxlength = 16;              //Length is in bytes, transaction length is in bits.
+   t.length = 32;        //Length is in bytes, transaction length is in bits.
    t.rx_buffer = read_data;
 
    spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
@@ -529,7 +530,7 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
    if (ret != ESP_OK) {
       nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "TS Transation"));
    }
-   printf("Read Data: %x %x\n", read_data[0], read_data[1]);
+   printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3]);
 
    return read_data[0];
 }
