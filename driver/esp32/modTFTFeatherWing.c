@@ -432,7 +432,7 @@ STATIC void spi_bus_init(TFTFeatherWing_obj_t *self) {
       .max_transfer_sz=128*1024,
    };
 
-   ret=spi_bus_initialize(self->spihost, &buscfg, 0);
+   ret=spi_bus_initialize(self->spihost, &buscfg, 1);
    if (ret != ESP_OK) {
       nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed initializing SPI bus"));
    }
@@ -452,10 +452,10 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
       .queue_size=1,
       .pre_cb=NULL,
       .post_cb=NULL,
-      .flags=SPI_DEVICE_HALFDUPLEX,
+      //.flags=SPI_DEVICE_HALFDUPLEX,
       .duty_cycle_pos=128,
-      .command_bits=8,
-      .dummy_bits=8,
+      //.command_bits=8,
+      //.dummy_bits=8,
    };
 
    /* gpio_pad_select_gpio(32); */
@@ -509,15 +509,16 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
  
    spi_transaction_t t;
    uint8_t read_data[2];
-   uint8_t write_data[1];
+   uint8_t write_data[2];
 
    memset(&t, 0, sizeof(t));		//Zero out the transaction
-   t.cmd = (reg | 0x80);
-   printf("CMD %x\n", t.cmd);
-   /* write_data[0] = (reg | 0x80); */
-   /* t.tx_buffer = write_data; */
-   /* printf("CMD %x\n",write_data[0]); */
-   t.length = 8;
+   //t.cmd = (reg | 0x80);
+   //printf("CMD %x\n", t.cmd);
+   write_data[0] = (reg | 0x80);
+   write_data[1] = 0x00;
+   t.tx_buffer = write_data;
+   printf("CMD %x\n",write_data[0]);
+   t.length = 16;
    t.rxlength = 16;              //Length is in bytes, transaction length is in bits.
    t.rx_buffer = read_data;
 
