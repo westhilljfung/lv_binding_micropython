@@ -488,6 +488,10 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
       .duty_cycle_pos=128,
       .command_bits=8,
    };
+
+   
+   //gpio_pad_select_gpio(self->rcs);
+   //gpio_set_direction(self->rcs, GPIO_MODE_OUTPUT);
    
    ret=spi_bus_add_device(self->spihost, &devcfg, &self->spi_ts);
    if (ret != ESP_OK) {
@@ -615,11 +619,11 @@ STATIC void tft_init(TFTFeatherWing_obj_t *self) {
       nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding SPI device"));
    }
 
-   
-   //Initialize non-SPI GPIOs
    gpio_pad_select_gpio(self->dc);
-   gpio_set_direction(self->dc, GPIO_MODE_OUTPUT);
-
+   gpio_set_direction(self->dc, GPIO_MODE_OUTPUT);   
+   gpio_set_level(self->dc, 0);
+   
+   //Initialize non-SPI GPIOs   
    const lcd_init_cmd_t hx_init_cmds[]={
       {HX8357_SWRESET, {10}, 0x80}, // Soft reset, then delay 10 ms
       {HX8357D_SETC, {0xFF, 0x83, 0x57}, 3},
