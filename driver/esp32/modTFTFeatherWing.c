@@ -489,8 +489,8 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
       .command_bits=8,
    };
 
-   //gpio_pad_select_gpio(self->rcs);
-   //gpio_set_direction(self->rcs, GPIO_MODE_OUTPUT);
+   gpio_pad_select_gpio(self->rcs);
+   gpio_set_direction(self->rcs, GPIO_MODE_OUTPUT);
    
    ret=spi_bus_add_device(self->spihost, &devcfg, &self->spi_ts);
    if (ret != ESP_OK) {
