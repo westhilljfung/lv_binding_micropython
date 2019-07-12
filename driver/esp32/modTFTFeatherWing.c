@@ -681,6 +681,7 @@ STATIC void tft_init(TFTFeatherWing_obj_t *self) {
       }
       cmd++;
    }
+   tft_send_cmd(self, 0x00);
    printf("End TFT Init\n");
 }
 
