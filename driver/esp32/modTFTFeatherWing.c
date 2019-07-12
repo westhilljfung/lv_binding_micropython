@@ -519,7 +519,7 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
    write_data[3] = (reg | 0x80);
    t.tx_buffer = write_data;
    printf("CMD %x\n",write_data[0]);
-   t.length = 32;        //Length is in bytes, transaction length is in bits.
+   t.length = 16;        //Length is in bytes, transaction length is in bits.
    t.rx_buffer = read_data;
 
    spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
