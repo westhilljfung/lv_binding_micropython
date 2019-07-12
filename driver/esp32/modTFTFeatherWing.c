@@ -411,7 +411,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
      
    spi_bus_init(self);
    ts_init(self);
-   //tft_init(self);
+   tft_init(self);
    
    return mp_const_none;
 }
@@ -445,7 +445,7 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
    esp_err_t ret;
    
    //Attach the Touch Screen to the SPI bus
-   spi_device_interface_config_t devcfg={
+   spi_device_interface_config_t devcfg_ts={
       .clock_speed_hz=1000*1000, //Clock out at DISP_SPI_MHZ MHz
       .mode=0,                             //SPI mode 0
       .spics_io_num=32,              //CS pin
@@ -457,11 +457,11 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
       //.command_bits=8,
    };
 
-   //gpio_pad_select_gpio(self->rcs);
-   //gpio_set_direction(self->rcs, GPIO_MODE_OUTPUT);    
-   //gpio_set_level(self->dc, 0);
+   gpio_pad_select_gpio(32);
+   gpio_set_direction(32, GPIO_MODE_OUTPUT);    
+   gpio_set_level(32, 0);
    
-   ret=spi_bus_add_device(self->spihost, &devcfg, &self->spi_ts);
+   ret=spi_bus_add_device(self->spihost, &devcfg_ts, &self->spi_ts);
    if (ret != ESP_OK) {
       nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding SPI device"));
    }
@@ -576,7 +576,7 @@ STATIC void tft_init(TFTFeatherWing_obj_t *self) {
     esp_err_t ret;
    
    //Attach the TFT to the SPI bus
-   spi_device_interface_config_t devcfg={
+   spi_device_interface_config_t devcfg_tft={
       .clock_speed_hz=self->tft_mhz*1000*1000, //Clock out at DISP_SPI_MHZ MHz
       .mode=0,                             //SPI mode 0
       .spics_io_num=self->tcs,              //CS pin
@@ -587,7 +587,7 @@ STATIC void tft_init(TFTFeatherWing_obj_t *self) {
       .duty_cycle_pos=128,
    };
    
-   ret=spi_bus_add_device(self->spihost, &devcfg, &self->spi_tft);
+   ret=spi_bus_add_device(self->spihost, &devcfg_tft, &self->spi_tft);
    if (ret != ESP_OK) {
       nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding SPI device"));
    }
