@@ -408,7 +408,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
      
    spi_bus_init(self);
    tft_init(self);
-   ts_init(self);
+   //ts_init(self);
    
    return mp_const_none;
 }
@@ -662,7 +662,7 @@ STATIC void tft_send_data(TFTFeatherWing_obj_t *self, const void * data, const u
 }
 
 STATIC void tft_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p) {
-   //printf("Flush\n");
+   printf("Flush\n");
    uint8_t data[4];
 
    TFTFeatherWing_obj_t *self = g_TFTFeatherWing;
