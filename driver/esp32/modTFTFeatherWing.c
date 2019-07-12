@@ -496,10 +496,8 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
    
    uint16_t ts_version;
    ts_version = ts_read_register_byte(self, 0);
-   //ts_write_byte(self, 0x00);
    ts_version <<= 8;
    ts_version |= ts_read_register_byte(self, 1);
-   //ts_write_byte(self, 0x00);
    printf("TS Version %x\n", ts_version);
 
    // Initialize STMPE610
@@ -543,7 +541,7 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
    if (ret != ESP_OK) {
       nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Transation"));
    }
-   printf("Read Data: %x %x\n", read_data[0], read_data[0]);
+   printf("Read Data: %x %x\n", read_data[0], read_data[1]);
 
    return read_data[0];
 }
