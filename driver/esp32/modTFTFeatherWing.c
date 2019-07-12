@@ -464,7 +464,7 @@ STATIC void spi_bus_init(TFTFeatherWing_obj_t *self) {
       .max_transfer_sz=128*1024,
    };
 
-   ret=spi_bus_initialize(self->spihost, &buscfg, 1);
+   ret=spi_bus_initialize(self->spihost, &buscfg, 0);
    if (ret != ESP_OK) {
       nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed initializing SPI bus"));
    }
@@ -478,7 +478,7 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
    
    //Attach the Touch Screen to the SPI bus
    spi_device_interface_config_t devcfg={
-      .clock_speed_hz=5000, //Clock out at DISP_SPI_MHZ MHz
+      .clock_speed_hz=1000*1000, //Clock out at DISP_SPI_MHZ MHz
       .mode=0,                             //SPI mode 0
       .spics_io_num=self->rcs,              //CS pin
       .queue_size=1,
@@ -486,11 +486,13 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
       .post_cb=NULL,
       .flags=SPI_DEVICE_HALFDUPLEX,
       .duty_cycle_pos=128,
-      .command_bits=8,
+      //.command_bits=8,
    };
 
    gpio_pad_select_gpio(self->rcs);
    gpio_set_direction(self->rcs, GPIO_MODE_OUTPUT);
+    
+   gpio_set_level(self->dc, 0);
    
    ret=spi_bus_add_device(self->spihost, &devcfg, &self->spi_ts);
    if (ret != ESP_OK) {
@@ -530,10 +532,14 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
  
    spi_transaction_t t;
    uint8_t read_data[2];
+   uint8_t write_data[1];
 
    memset(&t, 0, sizeof(t));		//Zero out the transaction
    t.cmd = (reg | 0x80);
    printf("CMD %x\n", t.cmd);
+   write_data[0] = (reg | 0x80);
+   t.buffer = write_data;
+   t.length = 8;
    t.rxlength = 16;              //Length is in bytes, transaction length is in bits.
    t.rx_buffer = read_data;
 
