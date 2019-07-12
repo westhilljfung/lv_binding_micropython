@@ -664,20 +664,20 @@ STATIC void tft_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area, lv_
    TFTFeatherWing_obj_t *self = g_TFTFeatherWing;
 
    /*Column addresses*/
-   ili9441_send_cmd(self, HX8357_CASET);
+   tft_send_cmd(self, HX8357_CASET);
    data[0] = (area->x1 >> 8) & 0xFF;
    data[1] = area->x1 & 0xFF;
    data[2] = (area->x2 >> 8) & 0xFF;
    data[3] = area->x2 & 0xFF;
-   hx8357_send_data(self, data, 4);
+   tft_send_data(self, data, 4);
 
    /*Page addresses*/
-   ili9441_send_cmd(self, HX8357_PASET);
+   tft_send_cmd(self, HX8357_PASET);
    data[0] = (area->y1 >> 8) & 0xFF;
    data[1] = area->y1 & 0xFF;
    data[2] = (area->y2 >> 8) & 0xFF;
    data[3] = area->y2 & 0xFF;
-   hx8357_send_data(self, data, 4);
+   tft_send_data(self, data, 4);
 
    /*Memory write*/
    tft_send_cmd(self, HX8357_RAMWR);
