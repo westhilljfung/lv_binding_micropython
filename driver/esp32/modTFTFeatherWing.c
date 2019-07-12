@@ -454,12 +454,13 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
       .post_cb=NULL,
       .flags=SPI_DEVICE_HALFDUPLEX,
       .duty_cycle_pos=128,
-      //.command_bits=8,
+      .command_bits=8,
+      .dummy_bits=8,
    };
 
-   gpio_pad_select_gpio(32);
-   gpio_set_direction(32, GPIO_MODE_OUTPUT);    
-   gpio_set_level(32, 0);
+   /* gpio_pad_select_gpio(32); */
+   /* gpio_set_direction(32, GPIO_MODE_OUTPUT);     */
+   /* gpio_set_level(32, 0); */
    
    ret=spi_bus_add_device(self->spihost, &devcfg_ts, &self->spi_ts);
    if (ret != ESP_OK) {
@@ -468,14 +469,18 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
    
    uint16_t ts_version;
      
-   gpio_set_level(32, 1);
-   gpio_set_level(32, 0);
+   /* gpio_set_level(32, 1); */
+   /* gpio_set_level(32, 0); */
    ts_version = ts_read_register_byte(self, 0);
     
-   gpio_set_level(32, 1);
+   /* gpio_set_level(32, 1);    */
+   /* gpio_set_level(32, 0); */
+
    ts_version <<= 8;
    ts_version |= ts_read_register_byte(self, 1);
    printf("TS Version %x\n", ts_version);
+
+   /* gpio_set_level(32, 1); */
 
    // Initialize STMPE610
    ts_write_register_byte(self, STMPE_SYS_CTRL2, 0x0); // turn on clocks!
@@ -507,11 +512,11 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
    uint8_t write_data[1];
 
    memset(&t, 0, sizeof(t));		//Zero out the transaction
-   //t.cmd = (reg | 0x80);
-   //printf("CMD %x\n", t.cmd);
-   write_data[0] = (reg | 0x80);
-   t.tx_buffer = write_data;
-   printf("CMD %x\n",write_data[0]);
+   t.cmd = (reg | 0x80);
+   printf("CMD %x\n", t.cmd);
+   /* write_data[0] = (reg | 0x80); */
+   /* t.tx_buffer = write_data; */
+   /* printf("CMD %x\n",write_data[0]); */
    t.length = 8;
    t.rxlength = 16;              //Length is in bytes, transaction length is in bits.
    t.rx_buffer = read_data;
