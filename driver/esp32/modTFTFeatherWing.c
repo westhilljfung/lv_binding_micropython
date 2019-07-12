@@ -538,7 +538,7 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
    t.cmd = (reg | 0x80);
    printf("CMD %x\n", t.cmd);
    write_data[0] = (reg | 0x80);
-   t.buffer = write_data;
+   t.tx_buffer = write_data;
    t.length = 8;
    t.rxlength = 16;              //Length is in bytes, transaction length is in bits.
    t.rx_buffer = read_data;
