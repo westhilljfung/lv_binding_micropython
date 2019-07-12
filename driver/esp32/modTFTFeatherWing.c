@@ -241,7 +241,9 @@ typedef struct {
 // This means we can have only one active display driver instance, pointed by this global.
 STATIC TFTFeatherWing_obj_t *g_TFTFeatherWing = NULL;
 
-// Base Function & Function Accessible to MP Protopype
+/**
+ * Base Function & Function Accessible to MP Protopype
+ **/
 STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
 					size_t n_args,
 					size_t n_kw,
@@ -314,7 +316,7 @@ STATIC void tft_send_cmd(TFTFeatherWing_obj_t *self, uint8_t cmd);
 STATIC void tft_send_data(TFTFeatherWing_obj_t *self, const void * data, uint16_t length);
 
 /**
- * Base Function
+ * Base Function & Function Accessible to MP Protopype
  **/
 STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
 					size_t n_args,
@@ -413,6 +415,38 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    return mp_const_none;
 }
 
+STATIC void tft_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p) {
+   //printf("Flush\n");
+   uint8_t data[4];
+
+   TFTFeatherWing_obj_t *self = g_TFTFeatherWing;
+
+   /*Column addresses*/
+   tft_send_cmd(self, HX8357_CASET);
+   data[0] = (area->x1 >> 8) & 0xFF;
+   data[1] = area->x1 & 0xFF;
+   data[2] = (area->x2 >> 8) & 0xFF;
+   data[3] = area->x2 & 0xFF;
+   tft_send_data(self, data, 4);
+
+   /*Page addresses*/
+   tft_send_cmd(self, HX8357_PASET);
+   data[0] = (area->y1 >> 8) & 0xFF;
+   data[1] = area->y1 & 0xFF;
+   data[2] = (area->y2 >> 8) & 0xFF;
+   data[3] = area->y2 & 0xFF;
+   tft_send_data(self, data, 4);
+
+   /*Memory write*/
+   tft_send_cmd(self, HX8357_RAMWR);
+
+   uint32_t size = (area->x2 - area->x1 + 1) * (area->y2 - area->y1 + 1);
+
+   tft_send_data(self, (void*)color_p, size * 2);
+
+   lv_disp_flush_ready(disp_drv);
+}
+
 /**
  * Common Function
  **/
@@ -461,10 +495,10 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
    
    uint16_t ts_version;
    ts_version = ts_read_register_byte(self, 0);
-   ts_write_register_byte(self, 0x00, 0x00);
+   ts_write_byte(self, 0x00);
    ts_version <<= 8;
    ts_version |= ts_read_register_byte(self, 1);
-   ts_write_register_byte(self, 0x00, 0x00);
+   ts_write_byte(self, 0x00);
    printf("TS Version %x\n", ts_version);
 
    // Initialize STMPE610
@@ -527,6 +561,22 @@ STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg
    t.length = 8;              //Length is in bytes, transaction length is in bits.
    t.tx_buffer = write_data;
 
+   spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
+
+   spi_transaction_t * rt;
+   ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
+   if (ret != ESP_OK) {
+      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Transation"));
+   }
+}
+
+STATIC void ts_write_byte(TFTFeatherWing_obj_t *self, const uint8_t val) {
+   printf("Write TS register\n");
+   esp_err_t ret;
+ 
+   spi_transaction_t t;
+   memset(&t, 0, sizeof(t));		//Zero out the transaction
+   t.cmd = val;
    spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
 
    spi_transaction_t * rt;
@@ -664,36 +714,4 @@ STATIC void tft_send_data(TFTFeatherWing_obj_t *self, const void * data, const u
    gpio_set_level(self->dc, 1);	 // Data mode
    tft_write(self, data, length);
    gpio_set_level(self->dc, 1);
-}
-
-STATIC void tft_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p) {
-   printf("Flush\n");
-   uint8_t data[4];
-
-   TFTFeatherWing_obj_t *self = g_TFTFeatherWing;
-
-   /*Column addresses*/
-   tft_send_cmd(self, HX8357_CASET);
-   data[0] = (area->x1 >> 8) & 0xFF;
-   data[1] = area->x1 & 0xFF;
-   data[2] = (area->x2 >> 8) & 0xFF;
-   data[3] = area->x2 & 0xFF;
-   tft_send_data(self, data, 4);
-
-   /*Page addresses*/
-   tft_send_cmd(self, HX8357_PASET);
-   data[0] = (area->y1 >> 8) & 0xFF;
-   data[1] = area->y1 & 0xFF;
-   data[2] = (area->y2 >> 8) & 0xFF;
-   data[3] = area->y2 & 0xFF;
-   tft_send_data(self, data, 4);
-
-   /*Memory write*/
-   tft_send_cmd(self, HX8357_RAMWR);
-
-   uint32_t size = (area->x2 - area->x1 + 1) * (area->y2 - area->y1 + 1);
-
-   tft_send_data(self, (void*)color_p, size * 2);
-
-   lv_disp_flush_ready(disp_drv);
 }
