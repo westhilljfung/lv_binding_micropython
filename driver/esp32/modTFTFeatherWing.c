@@ -709,11 +709,11 @@ STATIC void tft_write(TFTFeatherWing_obj_t *self, const uint8_t * data, const ui
 STATIC void tft_send_cmd(TFTFeatherWing_obj_t *self, const uint8_t cmd) {
    gpio_set_level(self->dc, 0);	 /*Command mode*/
    tft_write(self, &cmd, 1);
-   gpio_set_level(self->dc, 1);
+   gpio_set_level(self->dc, 0);
 }
 
 STATIC void tft_send_data(TFTFeatherWing_obj_t *self, const void * data, const uint16_t length) {
    gpio_set_level(self->dc, 1);	 // Data mode
    tft_write(self, data, length);
-   gpio_set_level(self->dc, 1);
+   gpio_set_level(self->dc, 0);
 }
