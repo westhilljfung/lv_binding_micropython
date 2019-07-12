@@ -515,7 +515,7 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
    //t.cmd = (reg | 0x80);
    //printf("CMD %x\n", t.cmd);
    write_data[0] = (reg | 0x80);
-   write_data[1] = 0x00;
+   write_data[1] = (reg | 0x80);
    t.tx_buffer = write_data;
    printf("CMD %x\n",write_data[0]);
    t.length = 16;
@@ -539,13 +539,14 @@ STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg
    esp_err_t ret;
  
    spi_transaction_t t;
-   uint8_t write_data[1];
+   uint8_t write_data[2];
 
-   write_data[0] = val;
+   write_data[0] = reg;
+   write_data[1] = val;
    
    memset(&t, 0, sizeof(t));		//Zero out the transaction
-   t.cmd = reg;
-   t.length = 8;              //Length is in bytes, transaction length is in bits.
+   //t.cmd = reg;
+   t.length = 16;              //Length is in bytes, transaction length is in bits.
    t.tx_buffer = write_data;
 
    spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
@@ -560,10 +561,14 @@ STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg
 STATIC void ts_write_byte(TFTFeatherWing_obj_t *self, const uint8_t val) {
    printf("Write TS\n");
    esp_err_t ret;
+   uint8_t write_data[1];
+
+   write_data[0] = val;
  
    spi_transaction_t t;
    memset(&t, 0, sizeof(t));		//Zero out the transaction
-   t.cmd = val;
+   t.length = 16;
+   t.tx_buffer = write_data;
    spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
 
    spi_transaction_t * rt;
