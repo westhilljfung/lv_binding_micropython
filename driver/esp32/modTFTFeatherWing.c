@@ -259,7 +259,7 @@ DEFINE_PTR_OBJ(tft_flush);
 STATIC const mp_rom_map_elem_t TFTFeatherWing_locals_dict_table[] = {
    { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&mp_init_TFTFeatherWing_obj) },
    { MP_ROM_QSTR(MP_QSTR_activate), MP_ROM_PTR(&mp_activate_TFTFeatherWing_obj) },
-   //{ MP_ROM_QSTR(MP_QSTR_flush), MP_ROM_PTR(&PTR_OBJ(ili9431_flush)) },
+   { MP_ROM_QSTR(MP_QSTR_flush), MP_ROM_PTR(&PTR_OBJ(tft_flush)) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(TFTFeatherWing_locals_dict, TFTFeatherWing_locals_dict_table);
