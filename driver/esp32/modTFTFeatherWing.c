@@ -461,7 +461,7 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
    
    uint16_t ts_version;
    ts_version = ts_read_register_byte(self, 0);
-   ts_write_register_byte(self, 0x00 0x00);
+   ts_write_register_byte(self, 0x00, 0x00);
    ts_version <<= 8;
    ts_version |= ts_read_register_byte(self, 1);
    ts_write_register_byte(self, 0x00 0x00);
