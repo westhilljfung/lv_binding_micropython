@@ -660,7 +660,7 @@ STATIC void tft_send_data(TFTFeatherWing_obj_t *self, const void * data, const u
 }
 
 STATIC void tft_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p) {
-   printf("Flush");
+   printf("Flush\n");
    uint8_t data[4];
 
    TFTFeatherWing_obj_t *self = g_TFTFeatherWing;
