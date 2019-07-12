@@ -563,7 +563,7 @@ STATIC void tft_init(TFTFeatherWing_obj_t *self) {
       nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding SPI device"));
    }
 
-   const lcd_init_cmd_t ili_init_cmds[]={
+   const lcd_init_cmd_t hx_init_cmds[]={
       {HX8357_SWRESET, {10}, 0x80}, // Soft reset, then delay 10 ms
       {HX8357D_SETC, {0xFF, 0x83, 0x57}, 3},
       {0xFF, {200}, 0x80},          // No command, just delay 200 ms
@@ -611,14 +611,14 @@ STATIC void tft_init(TFTFeatherWing_obj_t *self) {
    
    //Send all the commands
    uint16_t cmd = 0;
-   while (ili_init_cmds[cmd].databytes!=0xff) {
-      if (ili_init_cmds[cmd].cmd !=0xff) {
-	 tft_send_cmd(self, ili_init_cmds[cmd].cmd);
+   while (hx_init_cmds[cmd].databytes!=0xff) {
+      if (hx_init_cmds[cmd].cmd !=0xff) {
+	 tft_send_cmd(self, hx_init_cmds[cmd].cmd);
       }
-      if (ili_init_cmds[cmd].databytes & 0x80) {
-	 vTaskDelay(ili_init_cmds[cmd].data[0]/portTICK_PERIOD_MS);
+      if (hx_init_cmds[cmd].databytes & 0x80) {
+	 vTaskDelay(hx_init_cmds[cmd].data[0]/portTICK_PERIOD_MS);
       } else {
-	 tft_send_data(self, ili_init_cmds[cmd].data, ili_init_cmds[cmd].databytes & 0x1F);
+	 tft_send_data(self, hx_init_cmds[cmd].data, hx_init_cmds[cmd].databytes & 0x1F);
       }
       cmd++;
    }
