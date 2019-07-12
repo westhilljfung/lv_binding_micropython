@@ -306,6 +306,7 @@ STATIC void spi_bus_init(TFTFeatherWing_obj_t *self);
 STATIC void ts_init(TFTFeatherWing_obj_t *self);
 STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg);
 STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg, const uint8_t val);
+STATIC void ts_write_byte(TFTFeatherWing_obj_t *self, const uint8_t val);
 
 /**
  * TFT Function Prototype
