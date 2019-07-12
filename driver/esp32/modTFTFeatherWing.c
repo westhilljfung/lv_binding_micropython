@@ -463,11 +463,16 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
    
    ret=spi_bus_add_device(self->spihost, &devcfg_ts, &self->spi_ts);
    if (ret != ESP_OK) {
-      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding SPI device"));
+      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding TS SPI device"));
    }
    
    uint16_t ts_version;
+     
+   gpio_set_level(32, 1);
+   gpio_set_level(32, 0);
    ts_version = ts_read_register_byte(self, 0);
+    
+   gpio_set_level(32, 1);
    ts_version <<= 8;
    ts_version |= ts_read_register_byte(self, 1);
    printf("TS Version %x\n", ts_version);
@@ -516,7 +521,7 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
    spi_transaction_t * rt;
    ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
    if (ret != ESP_OK) {
-      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Transation"));
+      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "TS Transation"));
    }
    printf("Read Data: %x %x\n", read_data[0], read_data[1]);
 
@@ -542,7 +547,7 @@ STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg
    spi_transaction_t * rt;
    ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
    if (ret != ESP_OK) {
-      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Transation"));
+      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "TS Transation"));
    }
 }
 
@@ -558,7 +563,7 @@ STATIC void ts_write_byte(TFTFeatherWing_obj_t *self, const uint8_t val) {
    spi_transaction_t * rt;
    ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
    if (ret != ESP_OK) {
-      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Transation"));
+      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "TS Transation"));
    }
 }
 
@@ -589,7 +594,7 @@ STATIC void tft_init(TFTFeatherWing_obj_t *self) {
    
    ret=spi_bus_add_device(self->spihost, &devcfg_tft, &self->spi_tft);
    if (ret != ESP_OK) {
-      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding SPI device"));
+      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding TFT SPI device"));
    }
 
    gpio_pad_select_gpio(self->dc);
@@ -677,7 +682,7 @@ STATIC void tft_write(TFTFeatherWing_obj_t *self, const uint8_t * data, const ui
    spi_transaction_t * rt;
    ret = spi_device_get_trans_result(self->spi_tft, &rt, portMAX_DELAY);
    if (ret != ESP_OK) {
-      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding SPI device"));
+      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "TFT Transaction"));
    }
 }
 
