@@ -416,38 +416,6 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    return mp_const_none;
 }
 
-STATIC void tft_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p) {
-   //printf("Flush\n");
-   uint8_t data[4];
-
-   TFTFeatherWing_obj_t *self = g_TFTFeatherWing;
-
-   /*Column addresses*/
-   tft_send_cmd(self, HX8357_CASET);
-   data[0] = (area->x1 >> 8) & 0xFF;
-   data[1] = area->x1 & 0xFF;
-   data[2] = (area->x2 >> 8) & 0xFF;
-   data[3] = area->x2 & 0xFF;
-   tft_send_data(self, data, 4);
-
-   /*Page addresses*/
-   tft_send_cmd(self, HX8357_PASET);
-   data[0] = (area->y1 >> 8) & 0xFF;
-   data[1] = area->y1 & 0xFF;
-   data[2] = (area->y2 >> 8) & 0xFF;
-   data[3] = area->y2 & 0xFF;
-   tft_send_data(self, data, 4);
-
-   /*Memory write*/
-   tft_send_cmd(self, HX8357_RAMWR);
-
-   uint32_t size = (area->x2 - area->x1 + 1) * (area->y2 - area->y1 + 1);
-
-   tft_send_data(self, (void*)color_p, size * 2);
-
-   lv_disp_flush_ready(disp_drv);
-}
-
 /**
  * Common Function
  **/
@@ -480,7 +448,7 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
    spi_device_interface_config_t devcfg={
       .clock_speed_hz=1000*1000, //Clock out at DISP_SPI_MHZ MHz
       .mode=0,                             //SPI mode 0
-      .spics_io_num=self->rcs,              //CS pin
+      .spics_io_num=32,              //CS pin
       .queue_size=1,
       .pre_cb=NULL,
       .post_cb=NULL,
@@ -534,7 +502,7 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
    uint8_t write_data[1];
 
    memset(&t, 0, sizeof(t));		//Zero out the transaction
-   t.cmd = (reg | 0x80);
+   //t.cmd = (reg | 0x80);
    printf("CMD %x\n", t.cmd);
    write_data[0] = (reg | 0x80);
    t.tx_buffer = write_data;
@@ -722,4 +690,36 @@ STATIC void tft_send_data(TFTFeatherWing_obj_t *self, const void * data, const u
    gpio_set_level(self->dc, 1);	 // Data mode
    tft_write(self, data, length);
    gpio_set_level(self->dc, 0);
+}
+
+STATIC void tft_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p) {
+   //printf("Flush\n");
+   uint8_t data[4];
+
+   TFTFeatherWing_obj_t *self = g_TFTFeatherWing;
+
+   /*Column addresses*/
+   tft_send_cmd(self, HX8357_CASET);
+   data[0] = (area->x1 >> 8) & 0xFF;
+   data[1] = area->x1 & 0xFF;
+   data[2] = (area->x2 >> 8) & 0xFF;
+   data[3] = area->x2 & 0xFF;
+   tft_send_data(self, data, 4);
+
+   /*Page addresses*/
+   tft_send_cmd(self, HX8357_PASET);
+   data[0] = (area->y1 >> 8) & 0xFF;
+   data[1] = area->y1 & 0xFF;
+   data[2] = (area->y2 >> 8) & 0xFF;
+   data[3] = area->y2 & 0xFF;
+   tft_send_data(self, data, 4);
+
+   /*Memory write*/
+   tft_send_cmd(self, HX8357_RAMWR);
+
+   uint32_t size = (area->x2 - area->x1 + 1) * (area->y2 - area->y1 + 1);
+
+   tft_send_data(self, (void*)color_p, size * 2);
+
+   lv_disp_flush_ready(disp_drv);
 }
