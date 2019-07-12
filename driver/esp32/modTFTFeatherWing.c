@@ -408,7 +408,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
      
    spi_bus_init(self);
    tft_init(self);
-   //ts_init(self);
+   ts_init(self);
    
    return mp_const_none;
 }
