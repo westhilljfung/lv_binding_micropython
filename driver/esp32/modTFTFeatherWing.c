@@ -583,7 +583,7 @@ typedef struct {
 } lcd_init_cmd_t;
 
 STATIC void tft_init(TFTFeatherWing_obj_t *self) {
-    esp_err_t ret;
+   esp_err_t ret;
    
    //Attach the TFT to the SPI bus
    spi_device_interface_config_t devcfg_tft={
