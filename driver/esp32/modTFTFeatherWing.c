@@ -566,7 +566,7 @@ STATIC void tft_init(TFTFeatherWing_obj_t *self) {
    const lcd_init_cmd_t ili_init_cmds[]={
       {HX8357_SWRESET, {10}, 0x80}, // Soft reset, then delay 10 ms
       {HX8357D_SETC, {0xFF, 0x83, 0x57}, 3},
-      {0xFF, {300}, 0x80},          // No command, just delay 300 ms
+      {0xFF, {200}, 0x80},          // No command, just delay 200 ms
       {HX8357_SETRGB, {0x80, 0x00, 0x06, 0x06}, 4},    // 0x80 enables SDO pin (0x00 disables)
       {HX8357D_SETCOM, {0x25}, 1},                      // -1.52V
       {HX8357_SETOSC, {0x68}, 1},                      // Normal mode 70Hz, Idle mode 55 Hz
@@ -624,7 +624,7 @@ STATIC void tft_init(TFTFeatherWing_obj_t *self) {
    }
 }
 
-STATIC void tft_write_data(TFTFeatherWing_obj_t *self, const uint8_t * data, const uint16_t length) {
+STATIC void tft_write(TFTFeatherWing_obj_t *self, const uint8_t * data, const uint16_t length) {
    if (length == 0) {
       return;           //no need to send anything
    }
