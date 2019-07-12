@@ -451,7 +451,7 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
       .post_cb=NULL,
       .flags=SPI_DEVICE_HALFDUPLEX,
       .duty_cycle_pos=128,
-      .command_bits=16,
+      .command_bits=8,
    };
    
    ret=spi_bus_add_device(self->spihost, &devcfg, &self->spi_ts);
@@ -495,7 +495,6 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
 
    memset(&t, 0, sizeof(t));		//Zero out the transaction
    t.cmd = (reg | 0x80);
-   t.cmd <<= 8;
    printf("CMD %x\n", t.cmd);
    t.rxlength = 8;              //Length is in bytes, transaction length is in bits.
    t.rx_buffer = read_data;
@@ -661,7 +660,7 @@ STATIC void tft_send_data(TFTFeatherWing_obj_t *self, const void * data, const u
 }
 
 STATIC void tft_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p) {
-   printf("Flush\n");
+   //printf("Flush\n");
    uint8_t data[4];
 
    TFTFeatherWing_obj_t *self = g_TFTFeatherWing;
