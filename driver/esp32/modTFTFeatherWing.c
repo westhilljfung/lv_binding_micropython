@@ -394,7 +394,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    read_data[2] = 0;
    read_data[3] = 0;
 
-   t.cmd=0x80;
+   t.cmd=SPI_SWAP_DATA_TX(0x80,8);
    
    /* write_data[0] = (0x00 | 0x80); */
    /* write_data[1] = (0x00 | 0x80); */
