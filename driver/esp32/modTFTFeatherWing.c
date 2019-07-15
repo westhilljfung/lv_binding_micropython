@@ -349,7 +349,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    gpio_set_direction(15, GPIO_MODE_OUTPUT);
    gpio_set_direction(14, GPIO_MODE_OUTPUT);
    gpio_set_level(32, 1);
-   gpio_set_level(15, 1);
+   //gpio_set_level(15, 1);
    gpio_set_level(14, 1);
    
    //Initialize the SPI bus
