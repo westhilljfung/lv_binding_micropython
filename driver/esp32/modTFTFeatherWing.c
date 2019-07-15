@@ -343,13 +343,13 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
      
    esp_err_t ret;
    gpio_pad_select_gpio(32);
-   gpio_pad_select_gpio(15);
+   //gpio_pad_select_gpio(15);
    gpio_pad_select_gpio(14);
    gpio_set_direction(32, GPIO_MODE_OUTPUT);
-   gpio_set_direction(15, GPIO_MODE_OUTPUT);
+   //gpio_set_direction(15, GPIO_MODE_OUTPUT);
    gpio_set_direction(14, GPIO_MODE_OUTPUT);
    gpio_set_level(32, 1);
-   gpio_set_level(15, 1);
+   //gpio_set_level(15, 1);
    gpio_set_level(14, 1);
    
    //Initialize the SPI bus
@@ -367,9 +367,9 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
 
    //Attach the Touch Screen to the SPI bus
    spi_device_interface_config_t devcfg_ts={
-      .clock_speed_hz=1000*1000, //Clock out at DISP_SPI_MHZ MHz
+      .clock_speed_hz=1000*1000, //Clock out at 1 MHz
       .mode=0,                             //SPI mode 0
-      .spics_io_num=-1,              //CS pin
+      .spics_io_num=32,              //CS pin
       .queue_size=1,
       .pre_cb=NULL,
       .post_cb=NULL,
@@ -409,7 +409,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    //t.rxlength = 32;
    t.rx_buffer = read_data;
 
-   gpio_set_level(32, 0);
+   //gpio_set_level(32, 0);
    spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
 
    spi_transaction_t * rt;
@@ -418,7 +418,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    
    printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3]);
       
-   gpio_set_level(32, 1);
+   //gpio_set_level(32, 1);
    memset(&t, 0, sizeof(t));		//Zero out the transaction
 
    read_data[0] = 0;
@@ -440,7 +440,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    //t.rxlength = 32;
    t.rx_buffer = read_data;
 
-   gpio_set_level(32, 0);
+   //gpio_set_level(32, 0);
    spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
 
    ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
@@ -448,6 +448,6 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    
    printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3]);
       
-   gpio_set_level(32, 1);
+   //gpio_set_level(32, 1);
    return mp_const_none;
 }
