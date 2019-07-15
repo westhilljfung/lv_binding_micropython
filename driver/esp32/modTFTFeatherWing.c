@@ -385,8 +385,8 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    ESP_ERROR_CHECK(ret);
 
    spi_transaction_t t;
-   uint8_t read_data[4];
-   uint8_t write_data[4];
+   uint8_t read_data[10];
+   uint8_t write_data[10];
 
    memset(&t, 0, sizeof(t));		//Zero out the transaction
 
@@ -394,6 +394,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    read_data[1] = 0;
    read_data[2] = 0;
    read_data[3] = 0;
+   read_data[4] = 0;
 
    //t.cmd=0x8080;
    
@@ -401,6 +402,12 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    write_data[1] = (0x00 | 0x80);
    write_data[2] = (0x00 | 0x80);
    write_data[3] = (0x00 | 0x80);
+   write_data[4] = (0x00 | 0x80);
+   write_data[5] = (0x00 | 0x80);
+   write_data[6] = (0x00 | 0x80);
+   write_data[7] = (0x00 | 0x80);
+   write_data[8] = (0x00 | 0x80);
+   write_data[9] = (0x00 | 0x80);
 
    t.length = 32;        //Length is in bytes, transaction length is in bits.
    t.tx_buffer = write_data;
@@ -416,7 +423,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
    ESP_ERROR_CHECK(ret);
    
-   printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3]);
+   printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3], read_data[4], read_data[5], read_data[6], read_data[7], read_data[8], read_data[9]);
 
    //gpio_set_level(32, 1);
    memset(&t, 0, sizeof(t));		//Zero out the transaction
@@ -432,6 +439,12 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    write_data[1] = 0;
    write_data[2] = 0;
    write_data[3] = 0;
+   write_data[4] = 0;
+   write_data[5] = 0;
+   write_data[6] = 0;
+   write_data[7] = 0;
+   write_data[8] = 0;
+   write_data[9] = 0;
 
    t.length = 32;        //Length is in bytes, transaction length is in bits.
    t.tx_buffer = write_data;
@@ -445,8 +458,8 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
 
    ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
    ESP_ERROR_CHECK(ret);
-   
-   printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3]);
+
+   printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3], read_data[4], read_data[5], read_data[6], read_data[7], read_data[8], read_data[9]);
    
    //gpio_set_level(32, 1);
    memset(&t, 0, sizeof(t));		//Zero out the transaction
@@ -462,6 +475,12 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    write_data[1] = (0x01 | 0x80);
    write_data[2] = (0x01 | 0x80);
    write_data[3] = (0x01 | 0x80);
+   write_data[4] = (0x01 | 0x80);
+   write_data[5] = (0x01 | 0x80);
+   write_data[6] = (0x01 | 0x80);
+   write_data[7] = (0x01 | 0x80);
+   write_data[8] = (0x01 | 0x80);
+   write_data[9] = (0x01 | 0x80);
 
    t.length = 32;        //Length is in bytes, transaction length is in bits.
    t.tx_buffer = write_data;
@@ -475,9 +494,9 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
 
    ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
    ESP_ERROR_CHECK(ret);
+
+   printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3], read_data[4], read_data[5], read_data[6], read_data[7], read_data[8], read_data[9]);
    
-   printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3]);
-      
    //gpio_set_level(32, 1);
    return mp_const_none;
 }
