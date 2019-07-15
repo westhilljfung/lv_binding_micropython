@@ -109,34 +109,34 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .quadhd_io_num=-1,
    };
 
-   gpio_pad_select_gpio(GPIO_NUM_19);
-   gpio_pad_select_gpio(GPIO_NUM_18);
-   gpio_pad_select_gpio(GPIO_NUM_5);
+   /* gpio_pad_select_gpio(GPIO_NUM_19); */
+   /* gpio_pad_select_gpio(GPIO_NUM_18); */
+   /* gpio_pad_select_gpio(GPIO_NUM_5); */
 
-   gpio_set_level(GPIO_NUM_19, 1);
-   gpio_set_level(GPIO_NUM_18, 1);
-   gpio_set_level(GPIO_NUM_5, 1);
+   /* gpio_set_level(GPIO_NUM_19, 1); */
+   /* gpio_set_level(GPIO_NUM_18, 1); */
+   /* gpio_set_level(GPIO_NUM_5, 1); */
 	
-   gpio_set_direction(GPIO_NUM_19, GPIO_MODE_INPUT);
-   gpio_set_pull_mode(GPIO_NUM_19, GPIO_PULLUP_ONLY);
-   gpio_set_direction(GPIO_NUM_18, GPIO_MODE_OUTPUT);
-   gpio_set_direction(GPIO_NUM_5, GPIO_MODE_OUTPUT);
+   /* gpio_set_direction(GPIO_NUM_19, GPIO_MODE_INPUT); */
+   /* gpio_set_pull_mode(GPIO_NUM_19, GPIO_PULLUP_ONLY); */
+   /* gpio_set_direction(GPIO_NUM_18, GPIO_MODE_OUTPUT); */
+   /* gpio_set_direction(GPIO_NUM_5, GPIO_MODE_OUTPUT); */
 
-   gpio_pad_select_gpio(GPIO_NUM_14);
-   gpio_pad_select_gpio(GPIO_NUM_15);
-   gpio_pad_select_gpio(GPIO_NUM_32);
+   /* gpio_pad_select_gpio(GPIO_NUM_14); */
+   /* gpio_pad_select_gpio(GPIO_NUM_15); */
+   /* gpio_pad_select_gpio(GPIO_NUM_32); */
 
-   gpio_set_level(GPIO_NUM_14, 1);
-   gpio_set_level(GPIO_NUM_15, 1);
-   gpio_set_level(GPIO_NUM_32, 1);
+   /* gpio_set_level(GPIO_NUM_14, 1); */
+   /* gpio_set_level(GPIO_NUM_15, 1); */
+   /* gpio_set_level(GPIO_NUM_32, 1); */
    
-   gpio_set_direction(GPIO_NUM_14, GPIO_MODE_OUTPUT);
-   gpio_set_direction(GPIO_NUM_15, GPIO_MODE_OUTPUT);
-   gpio_set_direction(GPIO_NUM_32, GPIO_MODE_OUTPUT);
+   /* gpio_set_direction(GPIO_NUM_14, GPIO_MODE_OUTPUT); */
+   /* gpio_set_direction(GPIO_NUM_15, GPIO_MODE_OUTPUT); */
+   /* gpio_set_direction(GPIO_NUM_32, GPIO_MODE_OUTPUT); */
    
-   gpio_set_level(GPIO_NUM_14, 1);
-   gpio_set_level(GPIO_NUM_15, 1);
-   gpio_set_level(GPIO_NUM_32, 1);
+   /* gpio_set_level(GPIO_NUM_14, 1); */
+   /* gpio_set_level(GPIO_NUM_15, 1); */
+   /* gpio_set_level(GPIO_NUM_32, 1); */
    
    ret=spi_bus_initialize(HSPI_HOST, &buscfg, 1);
    ESP_ERROR_CHECK(ret);
@@ -146,7 +146,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    spi_device_interface_config_t devcfg={
       .clock_speed_hz=500000, //Clock out at 1 MHz
       .mode=0,                             //SPI mode 0
-      .spics_io_num=-1,              //CS pin
+      .spics_io_num=GPIO_NUM_32,              //CS pin
       .queue_size=1,
       .command_bits=8,
    };
@@ -154,8 +154,8 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    ret=spi_bus_add_device(HSPI_HOST, &devcfg, &spi);
    ESP_ERROR_CHECK(ret);
 
-   gpio_set_level(GPIO_NUM_32, 0);   
-   vTaskDelay(100 / portTICK_RATE_MS);
+   /* gpio_set_level(GPIO_NUM_32, 0);    */
+   /* vTaskDelay(100 / portTICK_RATE_MS); */
    
    spi_transaction_t t;
    uint8_t read_data[4];
