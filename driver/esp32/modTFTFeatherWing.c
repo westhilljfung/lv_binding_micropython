@@ -384,12 +384,12 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    };
    
    gpio_pad_select_gpio(GPIO_NUM_32);
-   gpio_set_direction(GPIO_NUM_15, GPIO_MODE_OUTPUT);
-   gpio_set_level(GPIO_NUM_15, 1);
+   gpio_set_direction(GPIO_NUM_32, GPIO_MODE_OUTPUT);
+   gpio_set_level(GPIO_NUM_32, 1);
    
    vTaskDelay(10 / portTICK_RATE_MS);
 
-   gpio_set_level(GPIO_NUM_15, 0);
+   gpio_set_level(GPIO_NUM_32, 0);
 
    vTaskDelay(10 / portTICK_RATE_MS);
    
@@ -436,7 +436,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    
    printf("Read Data: %x %x %x %x %x %x %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3], read_data[4], read_data[5], read_data[6], read_data[7], read_data[8], read_data[9]);
 
-   gpio_set_level(GPIO_NUM_15, 1);
+   gpio_set_level(GPIO_NUM_32, 1);
 
    return mp_const_none;
 }
