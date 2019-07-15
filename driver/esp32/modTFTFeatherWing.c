@@ -443,7 +443,6 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    gpio_set_level(32, 0);
    spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
 
-   spi_transaction_t * rt;
    ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
    ESP_ERROR_CHECK(ret);
    
