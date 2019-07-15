@@ -367,7 +367,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
 
    //Attach the Touch Screen to the SPI bus
    spi_device_interface_config_t devcfg_ts={
-      .clock_speed_hz=1000*1000, //Clock out at 1 MHz
+      .clock_speed_hz=800*1000, //Clock out at 1 MHz
       .mode=0,                             //SPI mode 0
       .spics_io_num=GPIO_NUM_32,              //CS pin
       .queue_size=1,
@@ -375,11 +375,11 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .post_cb=NULL,
       .flags=SPI_DEVICE_HALFDUPLEX,
       .duty_cycle_pos=128,
-      .command_bits=8,
-      //.address_bits=0,
+      //.command_bits=8,
+      .address_bits=8,
       //.dummy_bits=0,
-      .cs_ena_pretrans=8,
-      .cs_ena_posttrans=8,
+      .cs_ena_pretrans=16,
+      .cs_ena_posttrans=16,
       //.input_delay_ns=10,
    };
    
@@ -390,7 +390,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    uint8_t read_data[10];
 
    memset(&t, 0, sizeof(t));		//Zero out the transaction
-   t.cmd=0x80;
+   t.addr=0x80;
    
    t.rxlength = 80;
    t.rx_buffer = read_data;
@@ -405,7 +405,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
 
    memset(&t, 0, sizeof(t));		//Zero out the transaction
 
-   t.cmd=0x00;
+   t.addr=0x00;
 
    t.rxlength = 80;
    t.rx_buffer = read_data;
@@ -420,7 +420,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    
    memset(&t, 0, sizeof(t));		//Zero out the transaction
 
-   t.cmd=0x81;
+   t.addr=0x81;
 
    t.rxlength = 80;
    t.rx_buffer = read_data;
