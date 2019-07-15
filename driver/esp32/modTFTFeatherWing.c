@@ -390,13 +390,13 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .post_cb=NULL,
       .flags=SPI_DEVICE_HALFDUPLEX,
       .duty_cycle_pos=128,
-      .command_bits=8,
+      .command_bits=16,
       .address_bits=0,
-      .dummy_bits=0,
+      //.dummy_bits=0,
       //.input_delay_ns=500,
    };
    
-   ret=spi_bus_add_device(self->spihost, &devcfg_ts, &self->spi_ts);
+   ret=spi_bus_add_device(HSPI_HOST, &devcfg_ts, &self->spi_ts);
    ESP_ERROR_CHECK(ret);
 
    spi_transaction_t t;
@@ -410,7 +410,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    read_data[2] = 0;
    read_data[3] = 0;
 
-   t.cmd=SPI_SWAP_DATA_TX(0x80,8);
+   t.cmd=0x8080;
    
    /* write_data[0] = (0x00 | 0x80); */
    /* write_data[1] = (0x00 | 0x80); */
