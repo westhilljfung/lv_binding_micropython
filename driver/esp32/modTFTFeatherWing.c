@@ -375,7 +375,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .post_cb=NULL,
       //.flags=SPI_DEVICE_HALFDUPLEX,
       .duty_cycle_pos=128,
-      //.command_bits=8,
+      .command_bits=8,
       //.address_bits=8,
       //.dummy_bits=0,
       //.cs_ena_pretrans=16,
