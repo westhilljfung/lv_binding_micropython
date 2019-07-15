@@ -311,7 +311,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .quadhd_io_num=-1,
    };
 
-   ret=spi_bus_initialize(HSPI_HOST, &buscfg, 1);
+   ret=spi_bus_initialize(VSPI_HOST, &buscfg, 1);
    ESP_ERROR_CHECK(ret);
 
    //Attach the Touch Screen to the SPI bus
@@ -322,7 +322,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .queue_size=1,
    };
 
-   ret=spi_bus_add_device(HSPI_HOST, &devcfg_ts, &self->spi_ts);
+   ret=spi_bus_add_device(VSPI_HOST, &devcfg_ts, &self->spi_ts);
    ESP_ERROR_CHECK(ret);
    
    spi_transaction_t t;
