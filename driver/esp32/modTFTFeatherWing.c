@@ -404,6 +404,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    for (i = 0; i < 10; i++) {
       write_data[i] = 0x80;
    }
+   write_data[9] = 0x00;
    
    memset(&t, 0, sizeof(t));		//Zero out the transaction
    
@@ -422,6 +423,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    for (i = 0; i < 10; i++) {
       write_data[i] = 0x81;
    }
+   write_data[9] = 0x00;
    
    memset(&t, 0, sizeof(t));		//Zero out the transaction
    
@@ -439,6 +441,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    for (i = 0; i < 10; i++) {
       write_data[i] = 0x82;
    }
+   write_data[9] = 0x00;
    
    memset(&t, 0, sizeof(t));		//Zero out the transaction
    
