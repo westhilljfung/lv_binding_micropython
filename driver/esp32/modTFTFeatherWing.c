@@ -384,14 +384,32 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    if (ret != ESP_OK) {
       nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding TS SPI device"));
    }
-   
-   uint16_t ts_version;
 
-   ts_version = ts_read_register_byte(self, 0);
-    
-   ts_version <<= 8;
-   ts_version |= ts_read_register_byte(self, 1);
-   printf("TS Version %x\n", ts_version);
+   spi_transaction_t t;
+   uint8_t read_data[4];
+   uint8_t write_data[4];
+
+   memset(&t, 0, sizeof(t));		//Zero out the transaction
+   
+   write_data[0] = (0x00 | 0x80);
+   write_data[1] = (0x00 | 0x80);
+   write_data[2] = (0x01 | 0x80);
+   write_data[3] = (0x01 | 0x80);
+
+   t.length = 16;        //Length is in bytes, transaction length is in bits.
+   t.tx_buffer = write_data;
+   printf("CMD %x\n",write_data[0]);
+   
+   t.rx_buffer = read_data;
+
+   spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
+
+   spi_transaction_t * rt;
+   ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
+   if (ret != ESP_OK) {
+      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "TS Transation"));
+   }
+   printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3]);
    
    ts_init(self);
    
@@ -429,33 +447,7 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
 STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg) {
    printf("Read TS register\n");
    esp_err_t ret;
- 
-   spi_transaction_t t;
-   uint8_t read_data[4];
-   uint8_t write_data[4];
-
-   memset(&t, 0, sizeof(t));		//Zero out the transaction
-   //t.cmd = (reg | 0x80);
-   //printf("CMD %x\n", t.cmd);
-   write_data[0] = (reg | 0x80);
-   write_data[1] = (reg | 0x80);
-   write_data[2] = (reg | 0x80);
-   write_data[3] = (reg | 0x80);
-   t.tx_buffer = write_data;
-   printf("CMD %x\n",write_data[0]);
-   t.length = 16;        //Length is in bytes, transaction length is in bits.
-   t.rx_buffer = read_data;
-
-   spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
-
-   spi_transaction_t * rt;
-   ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
-   if (ret != ESP_OK) {
-      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "TS Transation"));
-   }
-   printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3]);
-
-   return read_data[0];
+   return 0;
 }
 
 STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg, const uint8_t val) {
