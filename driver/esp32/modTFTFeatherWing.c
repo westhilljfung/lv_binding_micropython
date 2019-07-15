@@ -357,8 +357,8 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
 
    gpio_pad_select_gpio(32);
    gpio_pad_select_gpio(15);
-   gpio_set_direction(32, GPIO_MODE_INPUT);
-   gpio_set_direction(15, GPIO_MODE_INPUT);
+   gpio_set_direction(32, GPIO_MODE_OUTPUT);
+   gpio_set_direction(15, GPIO_MODE_OUTPUT);
    gpio_set_level(32, 1);
    gpio_set_level(15, 1);
 	
