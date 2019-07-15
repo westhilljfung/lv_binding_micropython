@@ -369,7 +369,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    spi_device_interface_config_t devcfg_ts={
       .clock_speed_hz=1000*1000, //Clock out at 1 MHz
       .mode=0,                             //SPI mode 0
-      .spics_io_num=32,              //CS pin
+      .spics_io_num=-1,              //CS pin
       .queue_size=1,
       .pre_cb=NULL,
       .post_cb=NULL,
@@ -378,7 +378,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       //.command_bits=8,
       //.address_bits=0,
       //.dummy_bits=0,
-      .input_delay_ns=500,
+      //.input_delay_ns=500,
    };
    
    ret=spi_bus_add_device(HSPI_HOST, &devcfg_ts, &self->spi_ts);
