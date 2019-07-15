@@ -362,9 +362,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    };
 
    ret=spi_bus_initialize(self->spihost, &buscfg, 1);
-   if (ret != ESP_OK) {
-      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed initializing SPI bus"));
-   }
+   ESP_ERROR_CHECK(ret);
 
    //Attach the Touch Screen to the SPI bus
    spi_device_interface_config_t devcfg_ts={
@@ -379,13 +377,11 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .command_bits=0,
       .address_bits=0,
       .dummy_bits=0,
-      .input_delay_ns=1000,
+      .input_delay_ns=500,
    };
    
    ret=spi_bus_add_device(self->spihost, &devcfg_ts, &self->spi_ts);
-   if (ret != ESP_OK) {
-      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding TS SPI device"));
-   }
+   ESP_ERROR_CHECK(ret);
 
    spi_transaction_t t;
    uint8_t read_data[4];
@@ -413,9 +409,8 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
 
    spi_transaction_t * rt;
    ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
-   if (ret != ESP_OK) {
-      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "TS Transation"));
-   }
+   ESP_ERROR_CHECK(ret);
+   
    printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3]);
       
    return mp_const_none;
