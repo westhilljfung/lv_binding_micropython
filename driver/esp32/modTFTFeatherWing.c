@@ -369,29 +369,21 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    spi_device_interface_config_t devcfg_ts={
       .clock_speed_hz=1000000, //Clock out at 1 MHz
       .mode=0,                             //SPI mode 0
-      .spics_io_num=GPIO_NUM_32,              //CS pin
+      .spics_io_num=-1,              //CS pin
       .queue_size=1,
       .pre_cb=NULL,
       .post_cb=NULL,
-      //.flags=SPI_DEVICE_HALFDUPLEX,
-      .duty_cycle_pos=128,
-      //.command_bits=8,
-      //.address_bits=8,
-      //.dummy_bits=0,
-      //.cs_ena_pretrans=16,
-      //.cs_ena_posttrans=16,
-      //.input_delay_ns=10,
    };
    
-   /* gpio_pad_select_gpio(GPIO_NUM_32); */
-   /* gpio_set_direction(GPIO_NUM_32, GPIO_MODE_OUTPUT); */
-   /* gpio_set_level(GPIO_NUM_32, 1); */
+   gpio_pad_select_gpio(GPIO_NUM_32);
+   gpio_set_direction(GPIO_NUM_32, GPIO_MODE_OUTPUT);
+   gpio_set_level(GPIO_NUM_32, 1);
    
-   /* vTaskDelay(10 / portTICK_RATE_MS); */
+   vTaskDelay(100 / portTICK_RATE_MS);
 
-   /* gpio_set_level(GPIO_NUM_32, 0); */
+   gpio_set_level(GPIO_NUM_32, 0);
 
-   /* vTaskDelay(10 / portTICK_RATE_MS); */
+   vTaskDelay(100 / portTICK_RATE_MS);
    
    ret=spi_bus_add_device(HSPI_HOST, &devcfg_ts, &self->spi_ts);
    ESP_ERROR_CHECK(ret);
@@ -474,7 +466,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    
    printf("Read Data: %x %x %x %x %x %x %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3], read_data[4], read_data[5], read_data[6], read_data[7], read_data[8], read_data[9]);
 
-   /* gpio_set_level(GPIO_NUM_32, 1); */
+   gpio_set_level(GPIO_NUM_32, 1);
 
    return mp_const_none;
 }
