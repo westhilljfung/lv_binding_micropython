@@ -319,7 +319,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .queue_size=1,
    };
 
-   ret=spi_bus_add_device(VSPI_HOST, &devcfg_ts, spi);
+   ret=spi_bus_add_device(VSPI_HOST, &devcfg_ts, &spi);
    ESP_ERROR_CHECK(ret);
    
    spi_transaction_t t;
