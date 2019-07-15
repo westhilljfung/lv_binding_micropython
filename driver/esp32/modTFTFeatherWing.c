@@ -142,7 +142,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    
    /* t.length = 32; */
    /* t.tx_buffer = write_data; */
-   t.cmd = 0x82;
+   t.cmd = 0x88;
    t.rxlength = 32;
    t.rx_buffer = read_data;
 
