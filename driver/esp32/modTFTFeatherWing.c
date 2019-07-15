@@ -436,6 +436,23 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    
    printf("Read Data: %x %x %x %x %x %x %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3], read_data[4], read_data[5], read_data[6], read_data[7], read_data[8], read_data[9]);
 
+   for (i = 0; i < 10; i++) {
+      write_data[i] = 0x82;
+   }
+   
+   memset(&t, 0, sizeof(t));		//Zero out the transaction
+   
+   t.length = 80;
+   t.tx_buffer = write_data;
+   t.rx_buffer = read_data;
+
+   spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
+
+   ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
+   ESP_ERROR_CHECK(ret);
+   
+   printf("Read Data: %x %x %x %x %x %x %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3], read_data[4], read_data[5], read_data[6], read_data[7], read_data[8], read_data[9]);
+
    gpio_set_level(GPIO_NUM_32, 1);
 
    return mp_const_none;
