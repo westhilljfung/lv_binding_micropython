@@ -374,7 +374,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .post_cb=NULL,
       .flags=SPI_DEVICE_HALFDUPLEX,
       .duty_cycle_pos=128,
-      .command_bits=0,
+      .command_bits=8,
       .address_bits=0,
       .dummy_bits=0,
       .input_delay_ns=500,
@@ -385,7 +385,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
 
    spi_transaction_t t;
    uint8_t read_data[4];
-   uint8_t write_data[4];
+   /* uint8_t write_data[4]; */
 
    memset(&t, 0, sizeof(t));		//Zero out the transaction
 
@@ -393,15 +393,17 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    read_data[1] = 0;
    read_data[2] = 0;
    read_data[3] = 0;
-   
-   write_data[0] = (0x00 | 0x80);
-   write_data[1] = (0x00 | 0x80);
-   write_data[2] = (0x01 | 0x80);
-   write_data[3] = (0x01 | 0x80);
 
-   t.length = 32;        //Length is in bytes, transaction length is in bits.
-   t.tx_buffer = write_data;
-   printf("CMD %x\n",write_data[0]);
+   t.cmd=0x80;
+   
+   /* write_data[0] = (0x00 | 0x80); */
+   /* write_data[1] = (0x00 | 0x80); */
+   /* write_data[2] = (0x01 | 0x80); */
+   /* write_data[3] = (0x01 | 0x80); */
+
+   /* t.length = 32;        //Length is in bytes, transaction length is in bits. */
+   /* t.tx_buffer = write_data; */
+   /* printf("CMD %x\n",write_data[0]); */
 
    t.rxlength = 32;
    t.rx_buffer = read_data;
