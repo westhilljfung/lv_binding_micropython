@@ -353,9 +353,9 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
 
    //Initialize the SPI bus
    spi_bus_config_t buscfg={
-      .miso_io_num=self->miso,
-      .mosi_io_num=self->mosi,
-      .sclk_io_num=self->clk,
+      .miso_io_num=19,
+      .mosi_io_num=18,
+      .sclk_io_num=5,
       .quadwp_io_num=-1,
       .quadhd_io_num=-1,
       .max_transfer_sz=128*1024,
@@ -374,10 +374,11 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .queue_size=1,
       .pre_cb=NULL,
       .post_cb=NULL,
-      //.flags=SPI_DEVICE_HALFDUPLEX,
+      .flags=0,
       .duty_cycle_pos=128,
-      //.command_bits=8,
-      //.dummy_bits=8,
+      .command_bits=0,
+      .address_bits=0,
+      .dummy_bits=0,
    };
    
    ret=spi_bus_add_device(self->spihost, &devcfg_ts, &self->spi_ts);
@@ -396,7 +397,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    write_data[2] = (0x01 | 0x80);
    write_data[3] = (0x01 | 0x80);
 
-   t.length = 16;        //Length is in bytes, transaction length is in bits.
+   t.length = 32;        //Length is in bytes, transaction length is in bits.
    t.tx_buffer = write_data;
    printf("CMD %x\n",write_data[0]);
    
@@ -410,9 +411,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "TS Transation"));
    }
    printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3]);
-   
-   ts_init(self);
-   
+      
    return mp_const_none;
 }
 
