@@ -148,7 +148,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .mode=0,                             //SPI mode 0
       .spics_io_num=-1,              //CS pin
       .queue_size=1,
-      .command_bits=8;
+      .command_bits=8,
    };
 
    ret=spi_bus_add_device(HSPI_HOST, &devcfg, &spi);
