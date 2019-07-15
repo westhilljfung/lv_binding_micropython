@@ -351,6 +351,22 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
      
    esp_err_t ret;
 
+   gpio_pad_select_gpio(self->miso);
+   gpio_pad_select_gpio(self->mosi);
+   gpio_pad_select_gpio(self->clk);
+
+   gpio_pad_select_gpio(32);
+   gpio_pad_select_gpio(15);
+   gpio_set_direction(32, GPIO_MODE_INPUT);
+   gpio_set_direction(15, GPIO_MODE_INPUT);
+   gpio_set_level(32, 1);
+   gpio_set_level(15, 1);
+	
+   gpio_set_direction(self->miso, GPIO_MODE_INPUT);
+   gpio_set_pull_mode(self->miso, GPIO_PULLUP_ONLY);
+   gpio_set_direction(self->mosi, GPIO_MODE_OUTPUT);
+   gpio_set_direction(self->clk, GPIO_MODE_OUTPUT);
+   
    //Initialize the SPI bus
    spi_bus_config_t buscfg={
       .miso_io_num=19,
@@ -368,7 +384,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    spi_device_interface_config_t devcfg_ts={
       .clock_speed_hz=1000*1000, //Clock out at DISP_SPI_MHZ MHz
       .mode=0,                             //SPI mode 0
-      .spics_io_num=32,              //CS pin
+      .spics_io_num=-1,              //CS pin
       .queue_size=1,
       .pre_cb=NULL,
       .post_cb=NULL,
@@ -377,7 +393,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .command_bits=8,
       .address_bits=0,
       .dummy_bits=0,
-      .input_delay_ns=500,
+      //.input_delay_ns=500,
    };
    
    ret=spi_bus_add_device(self->spihost, &devcfg_ts, &self->spi_ts);
@@ -408,6 +424,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    t.rxlength = 32;
    t.rx_buffer = read_data;
 
+   gpio_set_level(32, 0);
    spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
 
    spi_transaction_t * rt;
@@ -416,6 +433,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    
    printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3]);
       
+   gpio_set_level(32, 1);
    return mp_const_none;
 }
 
