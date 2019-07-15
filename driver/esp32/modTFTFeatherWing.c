@@ -367,7 +367,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
 
    //Attach the Touch Screen to the SPI bus
    spi_device_interface_config_t devcfg_ts={
-      .clock_speed_hz=800*1000, //Clock out at 1 MHz
+      .clock_speed_hz=1000*1000, //Clock out at 1 MHz
       .mode=0,                             //SPI mode 0
       .spics_io_num=GPIO_NUM_32,              //CS pin
       .queue_size=1,
