@@ -102,9 +102,9 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    
    //Initialize the SPI bus
    spi_bus_config_t buscfg={
-      .miso_io_num=-1,
-      .mosi_io_num=-1,
-      .sclk_io_num=1,
+      .miso_io_num=19,
+      .mosi_io_num=23,
+      .sclk_io_num=18,
       .quadwp_io_num=-1,
       .quadhd_io_num=-1,
    };
