@@ -403,7 +403,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    t.tx_buffer = write_data;
    printf("CMD %x\n",write_data[0]);
 
-   t.rx_length = 32;
+   t.rxlength = 32;
    t.rx_buffer = read_data;
 
    spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
