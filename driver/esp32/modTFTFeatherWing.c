@@ -379,7 +379,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .command_bits=0,
       .address_bits=0,
       .dummy_bits=0,
-      .input_delay_ns=100,
+      .input_delay_ns=1000,
    };
    
    ret=spi_bus_add_device(self->spihost, &devcfg_ts, &self->spi_ts);
@@ -392,6 +392,11 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    uint8_t write_data[4];
 
    memset(&t, 0, sizeof(t));		//Zero out the transaction
+
+   read_data[0] = 0;
+   read_data[1] = 0;
+   read_data[2] = 0;
+   read_data[3] = 0;
    
    write_data[0] = (0x00 | 0x80);
    write_data[1] = (0x00 | 0x80);
