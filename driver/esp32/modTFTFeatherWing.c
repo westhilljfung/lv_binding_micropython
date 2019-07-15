@@ -102,9 +102,9 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    
    //Initialize the SPI bus
    spi_bus_config_t buscfg={
-      .miso_io_num=GPIO_NUM_19,
-      .mosi_io_num=GPIO_NUM_18,
-      .sclk_io_num=GPIO_NUM_5,
+      .miso_io_num=GPIO_NUM_12,
+      .mosi_io_num=GPIO_NUM_13,
+      .sclk_io_num=GPIO_NUM_14,
       .quadwp_io_num=-1,
       .quadhd_io_num=-1,
    };
@@ -117,9 +117,9 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    spi_device_interface_config_t devcfg={
       .clock_speed_hz=400, //Clock out at 1 MHz
       .mode=0,                             //SPI mode 0
-      .spics_io_num=GPIO_NUM_32,              //CS pin
+      .spics_io_num=15,              //CS pin
       .queue_size=1,
-      .command_bits=16,
+      .command_bits=1,
       .flags=SPI_DEVICE_HALFDUPLEX,
    };
 
@@ -142,7 +142,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    
    /* t.length = 32; */
    /* t.tx_buffer = write_data; */
-   t.cmd =0x8282;
+   t.cmd = ;
    t.rxlength = 32;
    t.rx_buffer = read_data;
 
