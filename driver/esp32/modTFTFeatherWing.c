@@ -362,14 +362,14 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       //.max_transfer_sz=128*1024,
    };
 
-   ret=spi_bus_initialize(VSPI_HOST, &buscfg, 1);
+   ret=spi_bus_initialize(HSPI_HOST, &buscfg, 1);
    ESP_ERROR_CHECK(ret);
 
    //Attach the Touch Screen to the SPI bus
    spi_device_interface_config_t devcfg_ts={
       .clock_speed_hz=800000, //Clock out at 1 MHz
       .mode=0,                             //SPI mode 0
-      .spics_io_num=-1,              //CS pin
+      .spics_io_num=GPIO_NUM_32,              //CS pin
       .queue_size=1,
       .pre_cb=NULL,
       .post_cb=NULL,
@@ -377,18 +377,18 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    
    
    
-   ret=spi_bus_add_device(VSPI_HOST, &devcfg_ts, &self->spi_ts);
+   ret=spi_bus_add_device(HSPI_HOST, &devcfg_ts, &self->spi_ts);
    ESP_ERROR_CHECK(ret);
 
-   gpio_pad_select_gpio(GPIO_NUM_32);
-   gpio_set_direction(GPIO_NUM_32, GPIO_MODE_OUTPUT);
-   gpio_set_level(GPIO_NUM_32, 1);
+   /* gpio_pad_select_gpio(GPIO_NUM_32); */
+   /* gpio_set_direction(GPIO_NUM_32, GPIO_MODE_OUTPUT); */
+   /* gpio_set_level(GPIO_NUM_32, 1); */
    
-   vTaskDelay(100 / portTICK_RATE_MS);
+   /* vTaskDelay(100 / portTICK_RATE_MS); */
 
-   gpio_set_level(GPIO_NUM_32, 0);
+   /* gpio_set_level(GPIO_NUM_32, 0); */
 
-   vTaskDelay(100 / portTICK_RATE_MS);
+   /* vTaskDelay(100 / portTICK_RATE_MS); */
    
    spi_transaction_t t;
    uint8_t read_data[10];
@@ -468,7 +468,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    
    printf("Read Data: %x %x %x %x %x %x %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3], read_data[4], read_data[5], read_data[6], read_data[7], read_data[8], read_data[9]);
 
-   gpio_set_level(GPIO_NUM_32, 1);
+   /* gpio_set_level(GPIO_NUM_32, 1); */
 
    return mp_const_none;
 }
