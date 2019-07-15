@@ -473,15 +473,15 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    //t.cmd=0x8080;
    
    write_data[0] = (0x01 | 0x80);
-   write_data[1] = (0x01 | 0x80);
-   write_data[2] = (0x01 | 0x80);
-   write_data[3] = (0x01 | 0x80);
-   write_data[4] = (0x01 | 0x80);
-   write_data[5] = (0x01 | 0x80);
-   write_data[6] = (0x01 | 0x80);
-   write_data[7] = (0x01 | 0x80);
-   write_data[8] = (0x01 | 0x80);
-   write_data[9] = (0x01 | 0x80);
+   write_data[1] = (0x01);
+   write_data[2] = (0x01);
+   write_data[3] = (0x01);
+   write_data[4] = (0x01);
+   write_data[5] = (0x01);
+   write_data[6] = (0x01);
+   write_data[7] = (0x01);
+   write_data[8] = (0x01);
+   write_data[9] = (0x01);
 
    t.length = 80;        //Length is in bytes, transaction length is in bits.
    t.tx_buffer = write_data;
