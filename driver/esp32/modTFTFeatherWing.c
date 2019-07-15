@@ -280,14 +280,6 @@ const mp_obj_module_t mp_module_TFTFeatherWing = {
  **/
 
 /**
- * TS Function Prototype
- */
-STATIC void ts_init(TFTFeatherWing_obj_t *self);
-STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg);
-STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg, const uint8_t val);
-STATIC void ts_write_byte(TFTFeatherWing_obj_t *self, const uint8_t val);
-
-/**
  * Base Function & Function Accessible to MP Protopype
  **/
 STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
@@ -370,7 +362,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .max_transfer_sz=128*1024,
    };
 
-   ret=spi_bus_initialize(self->spihost, &buscfg, 0);
+   ret=spi_bus_initialize(HSPI_HOST, &buscfg, 0);
    ESP_ERROR_CHECK(ret);
 
    //Attach the Touch Screen to the SPI bus
@@ -427,66 +419,36 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3]);
       
    gpio_set_level(32, 1);
-   return mp_const_none;
-}
-
-/**
- * TS Function
- */
-STATIC void ts_init(TFTFeatherWing_obj_t *self) {
-
-   // Initialize STMPE610
-   ts_write_register_byte(self, STMPE_SYS_CTRL2, 0x0); // turn on clocks!
-   ts_write_register_byte(self, STMPE_TSC_CTRL,
-			  STMPE_TSC_CTRL_XYZ | STMPE_TSC_CTRL_EN); // XYZ and enable!
-   ts_write_register_byte(self, STMPE_INT_EN, STMPE_INT_EN_TOUCHDET);
-   ts_write_register_byte(self, STMPE_ADC_CTRL1, STMPE_ADC_CTRL1_10BIT |
-			  (0x6 << 4)); // 96 clocks per conversion
-   ts_write_register_byte(self, STMPE_ADC_CTRL2, STMPE_ADC_CTRL2_6_5MHZ);
-   ts_write_register_byte(self, STMPE_TSC_CFG, STMPE_TSC_CFG_4SAMPLE |
-			  STMPE_TSC_CFG_DELAY_1MS |
-			  STMPE_TSC_CFG_SETTLE_5MS);
-   ts_write_register_byte(self, STMPE_TSC_FRACTION_Z, 0x6);
-   ts_write_register_byte(self, STMPE_FIFO_TH, 1);
-   ts_write_register_byte(self, STMPE_FIFO_STA, STMPE_FIFO_STA_RESET);
-   ts_write_register_byte(self, STMPE_FIFO_STA, 0); // unreset
-   ts_write_register_byte(self, STMPE_TSC_I_DRIVE, STMPE_TSC_I_DRIVE_50MA);
-   ts_write_register_byte(self, STMPE_INT_STA, 0xFF); // reset all ints
-   ts_write_register_byte(self, STMPE_INT_CTRL,
-			  STMPE_INT_CTRL_POL_HIGH | STMPE_INT_CTRL_ENABLE);
-
-   return;
-}
-
-STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg) {
-   printf("Read TS register\n");
-   esp_err_t ret;
-   return 0;
-}
-
-STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg, const uint8_t val) {
-   printf("Write TS register\n");
-   esp_err_t ret;
- 
-   spi_transaction_t t;
-   uint8_t write_data[2];
-
-   write_data[0] = reg;
-   write_data[1] = val;
-   
    memset(&t, 0, sizeof(t));		//Zero out the transaction
-   //t.cmd = reg;
-   t.length = 16;              //Length is in bytes, transaction length is in bits.
-   t.tx_buffer = write_data;
 
+   read_data[0] = 0;
+   read_data[1] = 0;
+   read_data[2] = 0;
+   read_data[3] = 0;
+
+   //t.cmd=0x8080;
+   
+   write_data[0] = (0x01 | 0x80);
+   write_data[1] = (0x01 | 0x80);
+   write_data[2] = (0x01 | 0x80);
+   write_data[3] = (0x01 | 0x80);
+
+   t.length = 32;        //Length is in bytes, transaction length is in bits.
+   t.tx_buffer = write_data;
+   printf("CMD %x\n",write_data[0]);
+
+   //t.rxlength = 32;
+   t.rx_buffer = read_data;
+
+   gpio_set_level(32, 0);
    spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
 
    spi_transaction_t * rt;
    ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
-   if (ret != ESP_OK) {
-      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "TS Transation"));
-   }
-
-   return;
+   ESP_ERROR_CHECK(ret);
+   
+   printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3]);
+      
+   gpio_set_level(32, 1);
+   return mp_const_none;
 }
-
