@@ -214,14 +214,6 @@ typedef struct {
   
    spi_device_handle_t spi_ts;
 
-   uint8_t spihost;
-   uint8_t miso;
-   uint8_t mosi;
-   uint8_t clk;
-   
-   uint8_t ts_mhz;
-   uint8_t rcs;
-   uint8_t irq;
   
 } TFTFeatherWing_obj_t;
 
@@ -287,29 +279,7 @@ STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
 					size_t n_kw,
 					const mp_obj_t *all_args)
 {
-   enum{      
-      ARG_spihost,
-	
-      ARG_miso,
-      ARG_mosi,
-      ARG_clk,
-
-      ARG_ts_mhz,
-      ARG_rcs,
-      ARG_irq,
-   };
-
-   static const mp_arg_t allowed_args[] = {      
-      { MP_QSTR_spihost,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=HSPI_HOST}},
-	
-      { MP_QSTR_miso,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=19}},
-      { MP_QSTR_mosi,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=18}},
-      { MP_QSTR_clk,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=5}},
-
-      { MP_QSTR_ts_mhz,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=1}},
-      { MP_QSTR_rcs,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=32}},
-      { MP_QSTR_irq,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
-   };
+   static const mp_arg_t allowed_args[] = {    };
 
    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
    mp_arg_parse_all_kw_array(n_args, n_kw, all_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
@@ -317,17 +287,6 @@ STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
    
    self->base.type = type;
    self->spi_ts = NULL;
-
-   self->spihost = args[ARG_spihost].u_int;
-   
-   self->miso = args[ARG_miso].u_int;
-   self->mosi = args[ARG_mosi].u_int;
-   self->clk = args[ARG_clk].u_int;
-
-   self->ts_mhz = args[ARG_ts_mhz].u_int;
-   self->rcs = args[ARG_rcs].u_int;
-   self->irq = args[ARG_irq].u_int;
-   
    return MP_OBJ_FROM_PTR(self);
 }
 
@@ -342,24 +301,14 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    mp_activate_TFTFeatherWing(self_in);
      
    esp_err_t ret;
-   //gpio_pad_select_gpio(32);
-   gpio_pad_select_gpio(15);
-   gpio_pad_select_gpio(14);
-   //gpio_set_direction(32, GPIO_MODE_OUTPUT);
-   gpio_set_direction(15, GPIO_MODE_OUTPUT);
-   gpio_set_direction(14, GPIO_MODE_OUTPUT);
-   //gpio_set_level(32, 1);
-   gpio_set_level(15, 1);
-   gpio_set_level(14, 1);
    
    //Initialize the SPI bus
    spi_bus_config_t buscfg={
-      .miso_io_num=GPIO_NUM_19,
-      .mosi_io_num=GPIO_NUM_18,
-      .sclk_io_num=GPIO_NUM_5,
+      .miso_io_num=19,
+      .mosi_io_num=18,
+      .sclk_io_num=5,
       .quadwp_io_num=-1,
       .quadhd_io_num=-1,
-      //.max_transfer_sz=128*1024,
    };
 
    ret=spi_bus_initialize(HSPI_HOST, &buscfg, 1);
@@ -367,42 +316,27 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
 
    //Attach the Touch Screen to the SPI bus
    spi_device_interface_config_t devcfg_ts={
-      .clock_speed_hz=800000, //Clock out at 1 MHz
+      .clock_speed_hz=1000000, //Clock out at 1 MHz
       .mode=0,                             //SPI mode 0
-      .spics_io_num=GPIO_NUM_32,              //CS pin
+      .spics_io_num=32,              //CS pin
       .queue_size=1,
-      .pre_cb=NULL,
-      .post_cb=NULL,
    };
-   
-   
-   
+
    ret=spi_bus_add_device(HSPI_HOST, &devcfg_ts, &self->spi_ts);
    ESP_ERROR_CHECK(ret);
-
-   /* gpio_pad_select_gpio(GPIO_NUM_32); */
-   /* gpio_set_direction(GPIO_NUM_32, GPIO_MODE_OUTPUT); */
-   /* gpio_set_level(GPIO_NUM_32, 1); */
-   
-   /* vTaskDelay(100 / portTICK_RATE_MS); */
-
-   /* gpio_set_level(GPIO_NUM_32, 0); */
-
-   /* vTaskDelay(100 / portTICK_RATE_MS); */
    
    spi_transaction_t t;
-   uint8_t read_data[10];
-   uint8_t write_data[10];
+   uint8_t read_data[4];
+   uint8_t write_data[4];
    uint16_t i;
 
-   for (i = 0; i < 10; i++) {
-      write_data[i] = 0x80;
+   for (i = 0; i < 4; i++) {
+      write_data[i] = 0x82;
    }
-   write_data[9] = 0x00;
    
    memset(&t, 0, sizeof(t));		//Zero out the transaction
    
-   t.length = 80;
+   t.length = 32;
    t.tx_buffer = write_data;
    t.rx_buffer = read_data;
 
@@ -412,63 +346,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
    ESP_ERROR_CHECK(ret);
    
-   printf("Read Data: %x %x %x %x %x %x %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3], read_data[4], read_data[5], read_data[6], read_data[7], read_data[8], read_data[9]);
-
-   for (i = 0; i < 10; i++) {
-      write_data[i] = 0x81;
-   }
-   write_data[9] = 0x00;
-   
-   memset(&t, 0, sizeof(t));		//Zero out the transaction
-   
-   t.length = 80;
-   t.tx_buffer = write_data;
-   t.rx_buffer = read_data;
-
-   spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
-
-   ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
-   ESP_ERROR_CHECK(ret);
-   
-   printf("Read Data: %x %x %x %x %x %x %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3], read_data[4], read_data[5], read_data[6], read_data[7], read_data[8], read_data[9]);
-
-   for (i = 0; i < 10; i++) {
-      write_data[i] = 0x82;
-   }
-   write_data[9] = 0x00;
-   
-   memset(&t, 0, sizeof(t));		//Zero out the transaction
-   
-   t.length = 80;
-   t.tx_buffer = write_data;
-   t.rx_buffer = read_data;
-
-   spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
-
-   ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
-   ESP_ERROR_CHECK(ret);
-   
-   printf("Read Data: %x %x %x %x %x %x %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3], read_data[4], read_data[5], read_data[6], read_data[7], read_data[8], read_data[9]);
-
-   for (i = 0; i < 10; i++) {
-      write_data[i] = 0x88;
-   }
-   write_data[9] = 0x00;
-   
-   memset(&t, 0, sizeof(t));		//Zero out the transaction
-   
-   t.length = 80;
-   t.tx_buffer = write_data;
-   t.rx_buffer = read_data;
-
-   spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
-
-   ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
-   ESP_ERROR_CHECK(ret);
-   
-   printf("Read Data: %x %x %x %x %x %x %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3], read_data[4], read_data[5], read_data[6], read_data[7], read_data[8], read_data[9]);
-
-   /* gpio_set_level(GPIO_NUM_32, 1); */
+   printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3]);
 
    return mp_const_none;
 }
