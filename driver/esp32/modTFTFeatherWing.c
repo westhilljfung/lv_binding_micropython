@@ -144,7 +144,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    spi_device_handle_t spi;
    //Attach the Touch Screen to the SPI bus
    spi_device_interface_config_t devcfg={
-      .clock_speed_hz=900000, //Clock out at 1 MHz
+      .clock_speed_hz=500000, //Clock out at 1 MHz
       .mode=0,                             //SPI mode 0
       .spics_io_num=-1,              //CS pin
       .queue_size=1,
@@ -172,10 +172,8 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    t.tx_buffer = write_data;
    t.rx_buffer = read_data;
 
-   spi_device_queue_trans(spi, &t, portMAX_DELAY);
+   ret = spi_device_transmit(spi, &t, portMAX_DELAY);
 
-   spi_transaction_t * rt;
-   ret=spi_device_get_trans_result(spi, &rt, portMAX_DELAY);
    ESP_ERROR_CHECK(ret);
    
    printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3]);
