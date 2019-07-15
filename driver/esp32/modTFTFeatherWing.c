@@ -211,10 +211,7 @@
 //////////////////////////////////////////////////////////////////////////////
 typedef struct {
    mp_obj_base_t base;
-  
-   spi_device_handle_t spi_ts;
 
-  
 } TFTFeatherWing_obj_t;
 
 // Unfortunately, lvgl doesnt pass user_data to callbacks, so we use this global.
@@ -314,15 +311,16 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    ret=spi_bus_initialize(VSPI_HOST, &buscfg, 1);
    ESP_ERROR_CHECK(ret);
 
+   spi_device_handle_t spi;
    //Attach the Touch Screen to the SPI bus
    spi_device_interface_config_t devcfg_ts={
-      .clock_speed_hz=4000, //Clock out at 1 MHz
+      .clock_speed_hz=1000000, //Clock out at 1 MHz
       .mode=0,                             //SPI mode 0
       .spics_io_num=32,              //CS pin
       .queue_size=1,
    };
 
-   ret=spi_bus_add_device(VSPI_HOST, &devcfg_ts, &self->spi_ts);
+   ret=spi_bus_add_device(VSPI_HOST, &devcfg_ts, spi);
    ESP_ERROR_CHECK(ret);
    
    spi_transaction_t t;
@@ -340,10 +338,10 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    t.tx_buffer = write_data;
    t.rx_buffer = read_data;
 
-   spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
+   spi_device_queue_trans(spi, &t, portMAX_DELAY);
 
    spi_transaction_t * rt;
-   ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
+   ret=spi_device_get_trans_result(spi, &rt, portMAX_DELAY);
    ESP_ERROR_CHECK(ret);
    
    printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3]);
