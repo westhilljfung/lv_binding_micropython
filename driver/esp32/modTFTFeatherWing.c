@@ -373,9 +373,9 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .queue_size=1,
       .pre_cb=NULL,
       .post_cb=NULL,
-      //.flags=SPI_DEVICE_HALFDUPLEX,
+      .flags=SPI_DEVICE_HALFDUPLEX,
       .duty_cycle_pos=128,
-      //.command_bits=8,
+      .command_bits=8,
       //.address_bits=0,
       //.dummy_bits=0,
       .input_delay_ns=10,
@@ -386,37 +386,13 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
 
    spi_transaction_t t;
    uint8_t read_data[10];
-   uint8_t write_data[10];
 
    memset(&t, 0, sizeof(t));		//Zero out the transaction
-
-   read_data[0] = 0;
-   read_data[1] = 0;
-   read_data[2] = 0;
-   read_data[3] = 0;
-   read_data[4] = 0;
-
-   //t.cmd=0x8080;
+   t.cmd=0x8080;
    
-   write_data[0] = (0x00 | 0x80);
-   write_data[1] = (0x00 | 0x80);
-   write_data[2] = (0x00 | 0x80);
-   write_data[3] = (0x00 | 0x80);
-   write_data[4] = (0x00 | 0x80);
-   write_data[5] = (0x00 | 0x80);
-   write_data[6] = (0x00 | 0x80);
-   write_data[7] = (0x00 | 0x80);
-   write_data[8] = (0x00 | 0x80);
-   write_data[9] = (0x00 | 0x80);
-
-   t.length = 80;        //Length is in bytes, transaction length is in bits.
-   t.tx_buffer = write_data;
-   printf("CMD %x\n",write_data[0]);
-
-   //t.rxlength = 32;
+   t.rxlength = 80;
    t.rx_buffer = read_data;
 
-   //gpio_set_level(32, 0);
    spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
 
    spi_transaction_t * rt;
@@ -425,35 +401,13 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    
    printf("Read Data: %x %x %x %x %x %x %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3], read_data[4], read_data[5], read_data[6], read_data[7], read_data[8], read_data[9]);
 
-   //gpio_set_level(32, 1);
    memset(&t, 0, sizeof(t));		//Zero out the transaction
 
-   read_data[0] = 0;
-   read_data[1] = 0;
-   read_data[2] = 0;
-   read_data[3] = 0;
+   t.cmd=0x0000;
 
-   //t.cmd=0x8080;
-   
-   write_data[0] = 0;
-   write_data[1] = 0;
-   write_data[2] = 0;
-   write_data[3] = 0;
-   write_data[4] = 0;
-   write_data[5] = 0;
-   write_data[6] = 0;
-   write_data[7] = 0;
-   write_data[8] = 0;
-   write_data[9] = 0;
-
-   t.length = 80;        //Length is in bytes, transaction length is in bits.
-   t.tx_buffer = write_data;
-   printf("CMD %x\n",write_data[0]);
-
-   //t.rxlength = 32;
+   t.rxlength = 80;
    t.rx_buffer = read_data;
 
-   //gpio_set_level(32, 0);
    spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
 
    ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
@@ -462,35 +416,13 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    printf("Read Data: %x %x %x %x %x %x %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3], read_data[4], read_data[5], read_data[6], read_data[7], read_data[8], read_data[9]);
   
    
-   //gpio_set_level(32, 1);
    memset(&t, 0, sizeof(t));		//Zero out the transaction
 
-   read_data[0] = 0;
-   read_data[1] = 0;
-   read_data[2] = 0;
-   read_data[3] = 0;
+   t.cmd=0x81;
 
-   //t.cmd=0x8080;
-   
-   write_data[0] = (0x01 | 0x80);
-   write_data[1] = (0x01);
-   write_data[2] = (0x01);
-   write_data[3] = (0x01);
-   write_data[4] = (0x01);
-   write_data[5] = (0x01);
-   write_data[6] = (0x01);
-   write_data[7] = (0x01);
-   write_data[8] = (0x01);
-   write_data[9] = (0x01);
-
-   t.length = 80;        //Length is in bytes, transaction length is in bits.
-   t.tx_buffer = write_data;
-   printf("CMD %x\n",write_data[0]);
-
-   //t.rxlength = 32;
+   t.rxlength = 80;
    t.rx_buffer = read_data;
 
-   //gpio_set_level(32, 0);
    spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
 
    ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
@@ -498,7 +430,5 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
 
    printf("Read Data: %x %x %x %x %x %x %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3], read_data[4], read_data[5], read_data[6], read_data[7], read_data[8], read_data[9]);
 
-   
-   //gpio_set_level(32, 1);
    return mp_const_none;
 }
