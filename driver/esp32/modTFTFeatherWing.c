@@ -103,8 +103,8 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    //Initialize the SPI bus
    spi_bus_config_t buscfg={
       .miso_io_num=19,
-      .mosi_io_num=23,
-      .sclk_io_num=18,
+      .mosi_io_num=18,
+      .sclk_io_num=5,
       .quadwp_io_num=-1,
       .quadhd_io_num=-1,
    };
@@ -115,9 +115,9 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    spi_device_handle_t spi;
    //Attach the Touch Screen to the SPI bus
    spi_device_interface_config_t devcfg={
-      .clock_speed_hz=1000000, //Clock out at 1 MHz
+      .clock_speed_hz=500, //Clock out at 1 MHz
       .mode=0,                             //SPI mode 0
-      .spics_io_num=5,              //CS pin
+      .spics_io_num=32,              //CS pin
       .queue_size=1,
       .command_bits=8,
       .flags=SPI_DEVICE_HALFDUPLEX,
