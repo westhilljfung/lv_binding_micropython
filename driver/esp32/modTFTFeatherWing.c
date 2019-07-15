@@ -119,7 +119,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .mode=0,                             //SPI mode 0
       .spics_io_num=15,              //CS pin
       .queue_size=1,
-      .command_bits=1,
+      .command_bits=8,
       .flags=SPI_DEVICE_HALFDUPLEX,
    };
 
@@ -142,7 +142,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    
    /* t.length = 32; */
    /* t.tx_buffer = write_data; */
-   t.cmd = ;
+   t.cmd = 0x82;
    t.rxlength = 32;
    t.rx_buffer = read_data;
 
