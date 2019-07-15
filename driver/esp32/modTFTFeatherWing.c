@@ -132,7 +132,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    spi_transaction_t t;
    uint8_t read_data[4];
    /* uint8_t write_data[4]; */
-   uint16_t i;
+   /* uint16_t i; */
 
    /* for (i = 0; i < 4; i++) { */
    /*    write_data[i] = 0x82; */
@@ -142,7 +142,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    
    /* t.length = 32; */
    /* t.tx_buffer = write_data; */
-   t.cmd =0x8200;
+   t.cmd =0x8282;
    t.rxlength = 32;
    t.rx_buffer = read_data;
 
