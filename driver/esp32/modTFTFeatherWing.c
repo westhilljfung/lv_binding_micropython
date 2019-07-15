@@ -121,14 +121,16 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    gpio_pad_select_gpio(14);
    gpio_pad_select_gpio(15);
    gpio_pad_select_gpio(32);
+   
    gpio_set_direction(14, GPIO_MODE_OUTPUT);
    gpio_set_direction(15, GPIO_MODE_OUTPUT);
    gpio_set_direction(32, GPIO_MODE_OUTPUT);
+   
    gpio_set_level(14, 1);
    gpio_set_level(15, 1);
    gpio_set_level(32, 1);
    
-   ret=spi_bus_initialize(HSPI_HOST, &buscfg, 1);
+   ret=spi_bus_initialize(VSPI_HOST, &buscfg, 1);
    ESP_ERROR_CHECK(ret);
 
    spi_device_handle_t spi;
@@ -140,7 +142,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .queue_size=1,
    };
 
-   ret=spi_bus_add_device(HSPI_HOST, &devcfg, &spi);
+   ret=spi_bus_add_device(VSPI_HOST, &devcfg, &spi);
    ESP_ERROR_CHECK(ret);
 
    gpio_set_level(32, 0);   
