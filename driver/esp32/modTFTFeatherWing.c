@@ -375,7 +375,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .post_cb=NULL,
       //.flags=SPI_DEVICE_HALFDUPLEX,
       .duty_cycle_pos=128,
-      //.command_bits=8,
+      .command_bits=8,
       //.address_bits=8,
       //.dummy_bits=0,
       //.cs_ena_pretrans=16,
@@ -426,7 +426,6 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
 
    spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
 
-   spi_transaction_t * rt;
    ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
    ESP_ERROR_CHECK(ret);
    
