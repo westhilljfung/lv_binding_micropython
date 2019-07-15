@@ -373,13 +373,13 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .queue_size=1,
       .pre_cb=NULL,
       .post_cb=NULL,
-      .flags=SPI_DEVICE_HALFDUPLEX,
+      //.flags=SPI_DEVICE_HALFDUPLEX,
       .duty_cycle_pos=128,
       .command_bits=8,
       //.address_bits=8,
       //.dummy_bits=0,
-      .cs_ena_pretrans=16,
-      .cs_ena_posttrans=16,
+      //.cs_ena_pretrans=16,
+      //.cs_ena_posttrans=16,
       //.input_delay_ns=10,
    };
    gpio_pad_select_gpio(GPIO_NUM_32);
@@ -389,11 +389,17 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
 
    spi_transaction_t t;
    uint8_t read_data[10];
+   uint8_t write_data[10];
+   uint16_t i;
 
-   memset(&t, 0, sizeof(t));		//Zero out the transaction
-   t.cmd=0x80;
+   for (i = 0; i < 10; i++) {
+      write_data[i] = 0x80;
+   }
    
-   t.rxlength = 80;
+   memset(&t, 0, sizeof(t));		//Zero out the transaction
+   
+   t.length = 80;
+   t.tx_buffer = write_data;
    t.rx_buffer = read_data;
 
    spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
@@ -402,35 +408,6 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
    ESP_ERROR_CHECK(ret);
    
-   printf("Read Data: %x %x %x %x %x %x %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3], read_data[4], read_data[5], read_data[6], read_data[7], read_data[8], read_data[9]);
-
-   memset(&t, 0, sizeof(t));		//Zero out the transaction
-
-   t.cmd=0x00;
-
-   t.rxlength = 80;
-   t.rx_buffer = read_data;
-
-   spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
-
-   ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
-   ESP_ERROR_CHECK(ret);
-
-   printf("Read Data: %x %x %x %x %x %x %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3], read_data[4], read_data[5], read_data[6], read_data[7], read_data[8], read_data[9]);
-  
-   
-   memset(&t, 0, sizeof(t));		//Zero out the transaction
-
-   t.cmd=0x81;
-
-   t.rxlength = 80;
-   t.rx_buffer = read_data;
-
-   spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
-
-   ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
-   ESP_ERROR_CHECK(ret);
-
    printf("Read Data: %x %x %x %x %x %x %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3], read_data[4], read_data[5], read_data[6], read_data[7], read_data[8], read_data[9]);
 
    return mp_const_none;
