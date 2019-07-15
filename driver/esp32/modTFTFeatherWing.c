@@ -367,7 +367,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
 
    //Attach the Touch Screen to the SPI bus
    spi_device_interface_config_t devcfg_ts={
-      .clock_speed_hz=900000, //Clock out at 1 MHz
+      .clock_speed_hz=800000, //Clock out at 1 MHz
       .mode=0,                             //SPI mode 0
       .spics_io_num=-1,              //CS pin
       .queue_size=1,
@@ -375,6 +375,11 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .post_cb=NULL,
    };
    
+   
+   
+   ret=spi_bus_add_device(VSPI_HOST, &devcfg_ts, &self->spi_ts);
+   ESP_ERROR_CHECK(ret);
+
    gpio_pad_select_gpio(GPIO_NUM_32);
    gpio_set_direction(GPIO_NUM_32, GPIO_MODE_OUTPUT);
    gpio_set_level(GPIO_NUM_32, 1);
@@ -385,9 +390,6 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
 
    vTaskDelay(100 / portTICK_RATE_MS);
    
-   ret=spi_bus_add_device(VSPI_HOST, &devcfg_ts, &self->spi_ts);
-   ESP_ERROR_CHECK(ret);
-
    spi_transaction_t t;
    uint8_t read_data[10];
    uint8_t write_data[10];
