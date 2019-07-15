@@ -379,6 +379,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .command_bits=0,
       .address_bits=0,
       .dummy_bits=0,
+      .input_delay_ns=100,
    };
    
    ret=spi_bus_add_device(self->spihost, &devcfg_ts, &self->spi_ts);
