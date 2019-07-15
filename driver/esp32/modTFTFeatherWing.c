@@ -283,7 +283,6 @@ STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
    TFTFeatherWing_obj_t *self = m_new_obj(TFTFeatherWing_obj_t);
    
    self->base.type = type;
-   self->spi_ts = NULL;
    return MP_OBJ_FROM_PTR(self);
 }
 
