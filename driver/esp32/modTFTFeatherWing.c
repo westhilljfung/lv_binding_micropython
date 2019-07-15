@@ -172,7 +172,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    t.tx_buffer = write_data;
    t.rx_buffer = read_data;
 
-   ret = spi_device_transmit(spi, &t, portMAX_DELAY);
+   ret = spi_device_transmit(spi, &t);
 
    ESP_ERROR_CHECK(ret);
    
