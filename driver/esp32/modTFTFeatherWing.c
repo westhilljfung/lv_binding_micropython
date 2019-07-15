@@ -102,13 +102,32 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    
    //Initialize the SPI bus
    spi_bus_config_t buscfg={
-      .miso_io_num=19,
-      .mosi_io_num=18,
-      .sclk_io_num=5,
+      .miso_io_num=GPIO_NUM_19,
+      .mosi_io_num=GPIO_NUM_18,
+      .sclk_io_num=GPIO_NUM_5,
       .quadwp_io_num=-1,
       .quadhd_io_num=-1,
    };
 
+   gpio_pad_select_gpio(19);
+   gpio_pad_select_gpio(18);
+   gpio_pad_select_gpio(5);
+	
+   gpio_set_direction(19, GPIO_MODE_INPUT);
+   gpio_set_pull_mode(19, GPIO_PULLUP_ONLY);
+   gpio_set_direction(18, GPIO_MODE_OUTPUT);
+   gpio_set_direction(5, GPIO_MODE_OUTPUT);
+
+   gpio_pad_select_gpio(14);
+   gpio_pad_select_gpio(15);
+   gpio_pad_select_gpio(32);
+   gpio_set_direction(14, GPIO_MODE_OUTPUT);
+   gpio_set_direction(15, GPIO_MODE_OUTPUT);
+   gpio_set_direction(32, GPIO_MODE_OUTPUT);
+   gpio_set_level(14, 1);
+   gpio_set_level(15, 1);
+   gpio_set_level(32, 1);
+   
    ret=spi_bus_initialize(HSPI_HOST, &buscfg, 1);
    ESP_ERROR_CHECK(ret);
 
@@ -117,12 +136,15 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    spi_device_interface_config_t devcfg={
       .clock_speed_hz=1000000, //Clock out at 1 MHz
       .mode=0,                             //SPI mode 0
-      .spics_io_num=32,              //CS pin
+      .spics_io_num=-1,              //CS pin
       .queue_size=1,
    };
 
    ret=spi_bus_add_device(HSPI_HOST, &devcfg, &spi);
    ESP_ERROR_CHECK(ret);
+
+   gpio_set_level(32, 0);   
+   vTaskDelay(100 / portTICK_RATE_MS);
    
    spi_transaction_t t;
    uint8_t read_data[4];
