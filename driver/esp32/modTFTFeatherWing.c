@@ -362,7 +362,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .max_transfer_sz=128*1024,
    };
 
-   ret=spi_bus_initialize(HSPI_HOST, &buscfg, 0);
+   ret=spi_bus_initialize(HSPI_HOST, &buscfg, 1);
    ESP_ERROR_CHECK(ret);
 
    //Attach the Touch Screen to the SPI bus
@@ -409,7 +409,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    write_data[8] = (0x00 | 0x80);
    write_data[9] = (0x00 | 0x80);
 
-   t.length = 32;        //Length is in bytes, transaction length is in bits.
+   t.length = 80;        //Length is in bytes, transaction length is in bits.
    t.tx_buffer = write_data;
    printf("CMD %x\n",write_data[0]);
 
@@ -446,7 +446,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    write_data[8] = 0;
    write_data[9] = 0;
 
-   t.length = 32;        //Length is in bytes, transaction length is in bits.
+   t.length = 80;        //Length is in bytes, transaction length is in bits.
    t.tx_buffer = write_data;
    printf("CMD %x\n",write_data[0]);
 
@@ -483,7 +483,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    write_data[8] = (0x01 | 0x80);
    write_data[9] = (0x01 | 0x80);
 
-   t.length = 32;        //Length is in bytes, transaction length is in bits.
+   t.length = 80;        //Length is in bytes, transaction length is in bits.
    t.tx_buffer = write_data;
    printf("CMD %x\n",write_data[0]);
 
