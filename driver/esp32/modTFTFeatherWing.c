@@ -226,7 +226,7 @@ typedef struct {
 
    uint8_t ts_mhz;
    uint8_t rcs;
-   uiit8_t ts_miso;
+   uint8_t ts_miso;
    uint8_t ts_mosi;
    uint8_t ts_clk;
   
@@ -409,9 +409,9 @@ STATIC void spi_bus_device_init(TFTFeatherWing_obj_t *self) {
 
    //Initialize the SPI bus
    spi_bus_config_t buscfg={
-      .miso_io_num=self->miso,
-      .mosi_io_num=self->mosi,
-      .sclk_io_num=self->clk,
+      .miso_io_num=self->tft_miso,
+      .mosi_io_num=self->tft_mosi,
+      .sclk_io_num=self->tft_clk,
       .quadwp_io_num=-1,
       .quadhd_io_num=-1,
       .max_transfer_sz=128*1024,
