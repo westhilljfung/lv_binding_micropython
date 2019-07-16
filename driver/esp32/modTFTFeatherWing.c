@@ -465,8 +465,8 @@ STATIC void spi_bus_device_init(TFTFeatherWing_obj_t *self) {
 STATIC void ts_init(TFTFeatherWing_obj_t *self) {
    
    gpio_pad_select_gpio(self->ts_miso);
-   gpio_pad_select_gpio(self->mosi);
-   gpio_pad_select_gpio(self->clk);
+   gpio_pad_select_gpio(self->ts_mosi);
+   gpio_pad_select_gpio(self->ts_clk);
    gpio_pad_select_gpio(self->rcs);
    
    gpio_set_direction(self->ts_miso, GPIO_MODE_INPUT);
@@ -489,12 +489,12 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
 
 
    // Initialize STMPE610
-   ts_write_register_byte(self, STMPE_SYS_CTRL2, 0x0); turn on clocks!
+   ts_write_register_byte(self, STMPE_SYS_CTRL2, 0x0); //turn on clocks!
    ts_write_register_byte(self, STMPE_TSC_CTRL,
-   			  STMPE_TSC_CTRL_XYZ | STMPE_TSC_CTRL_EN); XYZ and enable!
+   			  STMPE_TSC_CTRL_XYZ | STMPE_TSC_CTRL_EN);// XYZ and enable!
    ts_write_register_byte(self, STMPE_INT_EN, STMPE_INT_EN_TOUCHDET);
    ts_write_register_byte(self, STMPE_ADC_CTRL1, STMPE_ADC_CTRL1_10BIT |
-   			  (0x6 << 4)); 96 clocks per conversion
+   			  (0x6 << 4)); //96 clocks per conversion
    ts_write_register_byte(self, STMPE_ADC_CTRL2, STMPE_ADC_CTRL2_6_5MHZ);
    ts_write_register_byte(self, STMPE_TSC_CFG, STMPE_TSC_CFG_4SAMPLE |
    			  STMPE_TSC_CFG_DELAY_1MS |
@@ -502,9 +502,9 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
    ts_write_register_byte(self, STMPE_TSC_FRACTION_Z, 0x6);
    ts_write_register_byte(self, STMPE_FIFO_TH, 1);
    ts_write_register_byte(self, STMPE_FIFO_STA, STMPE_FIFO_STA_RESET);
-   ts_write_register_byte(self, STMPE_FIFO_STA, 0); unreset
+   ts_write_register_byte(self, STMPE_FIFO_STA, 0); //unreset
    ts_write_register_byte(self, STMPE_TSC_I_DRIVE, STMPE_TSC_I_DRIVE_50MA);
-   ts_write_register_byte(self, STMPE_INT_STA, 0xFF); reset all ints
+   ts_write_register_byte(self, STMPE_INT_STA, 0xFF); //reset all ints
    ts_write_register_byte(self, STMPE_INT_CTRL,
    			  STMPE_INT_CTRL_POL_HIGH | STMPE_INT_CTRL_ENABLE);
 }
