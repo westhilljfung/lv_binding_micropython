@@ -151,6 +151,24 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    ESP_ERROR_CHECK(ret);
    
    printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3]);
+   t.cmd = 0x80;
+   t.rxlength = 32;
+   t.rx_buffer = read_data;
+
+   ret = spi_device_transmit(spi, &t);
+
+   ESP_ERROR_CHECK(ret);
+   
+   printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3]);
+   t.cmd = 0x81;
+   t.rxlength = 32;
+   t.rx_buffer = read_data;
+
+   ret = spi_device_transmit(spi, &t);
+
+   ESP_ERROR_CHECK(ret);
+   
+   printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3]);
 
    return mp_const_none;
 }
