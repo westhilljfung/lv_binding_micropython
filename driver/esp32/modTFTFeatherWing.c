@@ -5,6 +5,7 @@
 //#include "freertos/FreeRTOS.h"
 //#include "freertos/task.h"
 //#include "esp_system.h"
+#include "rom/ets_sys.h"
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
 #include "lvgl/src/lv_hal/lv_hal_disp.h"
@@ -419,7 +420,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
 /**
  * Common Function
  **/
-STATIC void spi_bus_init(TFTFeatherWing_obj_t *self) {
+STATIC void spi_bus_device_init(TFTFeatherWing_obj_t *self) {
    esp_err_t ret;
 
    //Initialize the SPI bus
@@ -432,9 +433,45 @@ STATIC void spi_bus_init(TFTFeatherWing_obj_t *self) {
       .max_transfer_sz=128*1024,
    };
 
-   ret=spi_bus_initialize(self->spihost, &buscfg, 1);
+   ret = spi_bus_initialize(self->spihost, &buscfg, 1);
    if (ret != ESP_OK) {
       nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed initializing SPI bus"));
+   }
+   
+   /* //Attach the Touch Screen to the SPI bus */
+   /* spi_device_interface_config_t devcfg_ts={ */
+   /*    .clock_speed_hz=1000*1000, //Clock out at DISP_SPI_MHZ MHz */
+   /*    .mode=0,                             //SPI mode 0 */
+   /*    .spics_io_num=self->rcs,              //CS pin */
+   /*    .queue_size=1, */
+   /*    .pre_cb=NULL, */
+   /*    .post_cb=NULL, */
+   /*    //.flags=SPI_DEVICE_HALFDUPLEX, */
+   /*    .duty_cycle_pos=128, */
+   /*    //.command_bits=8, */
+   /*    //.dummy_bits=8, */
+   /* }; */
+
+   /* ret = spi_bus_add_device(self->spihost, &devcfg_ts, &self->spi_ts); */
+   /* if (ret != ESP_OK) { */
+   /*    nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding TS SPI device")); */
+   /* } */
+
+    //Attach the TFT to the SPI bus
+   spi_device_interface_config_t devcfg_tft={
+      .clock_speed_hz=self->tft_mhz*1000*1000, //Clock out at DISP_SPI_MHZ MHz
+      .mode=0,                             //SPI mode 0
+      .spics_io_num=self->tcs,              //CS pin
+      .queue_size=1,
+      .pre_cb=NULL,
+      .post_cb=NULL,
+      .flags=SPI_DEVICE_HALFDUPLEX,
+      .duty_cycle_pos=128,
+   };
+   
+   ret = spi_bus_add_device(self->spihost, &devcfg_tft, &self->spi_tft);
+   if (ret != ESP_OK) {
+      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding TFT SPI device"));
    }
 }
 
@@ -442,31 +479,20 @@ STATIC void spi_bus_init(TFTFeatherWing_obj_t *self) {
  * TS Function
  */
 STATIC void ts_init(TFTFeatherWing_obj_t *self) {
-   esp_err_t ret;
    
-   //Attach the Touch Screen to the SPI bus
-   spi_device_interface_config_t devcfg_ts={
-      .clock_speed_hz=1000*1000, //Clock out at DISP_SPI_MHZ MHz
-      .mode=0,                             //SPI mode 0
-      .spics_io_num=32,              //CS pin
-      .queue_size=1,
-      .pre_cb=NULL,
-      .post_cb=NULL,
-      //.flags=SPI_DEVICE_HALFDUPLEX,
-      .duty_cycle_pos=128,
-      //.command_bits=8,
-      //.dummy_bits=8,
-   };
-
-   /* gpio_pad_select_gpio(32); */
-   /* gpio_set_direction(32, GPIO_MODE_OUTPUT); */
-   /* gpio_set_level(32, 1); */
-   
-   ret=spi_bus_add_device(self->spihost, &devcfg_ts, &self->spi_ts);
-   if (ret != ESP_OK) {
-      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding TS SPI device"));
-   }
-   
+   gpio_pad_select_gpio(self->miso); 
+   gpio_pad_select_gpio(self->mosi); 
+   gpio_pad_select_gpio(self->clk);
+   gpio_pad_select_gpio(self->rcs);
+   gpio_set_direction(self->miso, GPIO_MODE_INPUT);
+   gpio_set_direction(self->mosi, GPIO_MODE_OUTPUT);
+   gpio_set_direction(self->clk, GPIO_MODE_OUTPUT);
+   gpio_set_direction(self->rcs, GPIO_MODE_OUTPUT);
+   gpio_set_pull_mode(self->miso, GPIO_PULLDOWN_ONLY);
+   gpio_set_level(self->mosi, 0);
+   gpio_set_level(self->clk, 0);
+   gpio_set_level(self->rcs, 1);
+      
    uint16_t ts_version;
 
    /* gpio_set_level(32, 0); */
@@ -481,57 +507,52 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
 
    /* gpio_set_level(32, 1); */
 
-   // Initialize STMPE610
-   ts_write_register_byte(self, STMPE_SYS_CTRL2, 0x0); // turn on clocks!
-   ts_write_register_byte(self, STMPE_TSC_CTRL,
-			  STMPE_TSC_CTRL_XYZ | STMPE_TSC_CTRL_EN); // XYZ and enable!
-   ts_write_register_byte(self, STMPE_INT_EN, STMPE_INT_EN_TOUCHDET);
-   ts_write_register_byte(self, STMPE_ADC_CTRL1, STMPE_ADC_CTRL1_10BIT |
-			  (0x6 << 4)); // 96 clocks per conversion
-   ts_write_register_byte(self, STMPE_ADC_CTRL2, STMPE_ADC_CTRL2_6_5MHZ);
-   ts_write_register_byte(self, STMPE_TSC_CFG, STMPE_TSC_CFG_4SAMPLE |
-			  STMPE_TSC_CFG_DELAY_1MS |
-			  STMPE_TSC_CFG_SETTLE_5MS);
-   ts_write_register_byte(self, STMPE_TSC_FRACTION_Z, 0x6);
-   ts_write_register_byte(self, STMPE_FIFO_TH, 1);
-   ts_write_register_byte(self, STMPE_FIFO_STA, STMPE_FIFO_STA_RESET);
-   ts_write_register_byte(self, STMPE_FIFO_STA, 0); // unreset
-   ts_write_register_byte(self, STMPE_TSC_I_DRIVE, STMPE_TSC_I_DRIVE_50MA);
-   ts_write_register_byte(self, STMPE_INT_STA, 0xFF); // reset all ints
-   ts_write_register_byte(self, STMPE_INT_CTRL,
-			  STMPE_INT_CTRL_POL_HIGH | STMPE_INT_CTRL_ENABLE);
+   /* // Initialize STMPE610 */
+   /* ts_write_register_byte(self, STMPE_SYS_CTRL2, 0x0); turn on clocks! */
+   /* ts_write_register_byte(self, STMPE_TSC_CTRL, */
+   /* 			  STMPE_TSC_CTRL_XYZ | STMPE_TSC_CTRL_EN); XYZ and enable! */
+   /* ts_write_register_byte(self, STMPE_INT_EN, STMPE_INT_EN_TOUCHDET); */
+   /* ts_write_register_byte(self, STMPE_ADC_CTRL1, STMPE_ADC_CTRL1_10BIT | */
+   /* 			  (0x6 << 4)); 96 clocks per conversion */
+   /* ts_write_register_byte(self, STMPE_ADC_CTRL2, STMPE_ADC_CTRL2_6_5MHZ); */
+   /* ts_write_register_byte(self, STMPE_TSC_CFG, STMPE_TSC_CFG_4SAMPLE | */
+   /* 			  STMPE_TSC_CFG_DELAY_1MS | */
+   /* 			  STMPE_TSC_CFG_SETTLE_5MS); */
+   /* ts_write_register_byte(self, STMPE_TSC_FRACTION_Z, 0x6); */
+   /* ts_write_register_byte(self, STMPE_FIFO_TH, 1); */
+   /* ts_write_register_byte(self, STMPE_FIFO_STA, STMPE_FIFO_STA_RESET); */
+   /* ts_write_register_byte(self, STMPE_FIFO_STA, 0); unreset */
+   /* ts_write_register_byte(self, STMPE_TSC_I_DRIVE, STMPE_TSC_I_DRIVE_50MA); */
+   /* ts_write_register_byte(self, STMPE_INT_STA, 0xFF); reset all ints */
+   /* ts_write_register_byte(self, STMPE_INT_CTRL, */
+   /* 			  STMPE_INT_CTRL_POL_HIGH | STMPE_INT_CTRL_ENABLE); */
 }
 
 STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg) {
    printf("Read TS register\n");
-   esp_err_t ret;
- 
-   spi_transaction_t t;
-   uint8_t read_data[4];
-   uint8_t write_data[4];
+   uint8_t read_data[2];
 
-   memset(&t, 0, sizeof(t));		//Zero out the transaction
-   //t.cmd = (reg | 0x80);
-   //printf("CMD %x\n", t.cmd);
-   write_data[0] = (reg | 0x80);
-   write_data[1] = (reg | 0x80);
-   write_data[2] = (reg | 0x80);
-   write_data[3] = (reg | 0x80);
-   t.tx_buffer = write_data;
-   printf("CMD %x\n",write_data[0]);
-   t.length = 16;        //Length is in bytes, transaction length is in bits.
-   t.rx_buffer = read_data;
+   for (uint8_t i = 0; i < 2; ++i) {
+        uint8_t data_out = reg | 0x80;
+        uint8_t data_in = 0;
+        for (uint8_t j = 0; j < 8; ++j, data_out <<= 1) {
+            gpio_set_level(self->mosi, (data_out >> 7) & 1);
+	    
+	    ets_delay_us(1);
+	    gpio_set_level(self->sck, 1);
+            data_in = (data_in << 1) | mp_hal_pin_read(self->miso);
+	    
+	    ets_delay_us(1);
+	    gpio_set_level(self->sck, 0);
+        }
+        if (dest != NULL) {
+            read_data[i] = data_in;
+        }
+    }
+   
+   printf("Read Data: %x %x\n", read_data[0], read_data[1]);
 
-   spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
-
-   spi_transaction_t * rt;
-   ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
-   if (ret != ESP_OK) {
-      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "TS Transation"));
-   }
-   printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3]);
-
-   return read_data[0];
+   return read_data[1];
 }
 
 STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg, const uint8_t val) {
@@ -589,24 +610,6 @@ typedef struct {
 } lcd_init_cmd_t;
 
 STATIC void tft_init(TFTFeatherWing_obj_t *self) {
-   esp_err_t ret;
-   
-   //Attach the TFT to the SPI bus
-   spi_device_interface_config_t devcfg_tft={
-      .clock_speed_hz=self->tft_mhz*1000*1000, //Clock out at DISP_SPI_MHZ MHz
-      .mode=0,                             //SPI mode 0
-      .spics_io_num=self->tcs,              //CS pin
-      .queue_size=1,
-      .pre_cb=NULL,
-      .post_cb=NULL,
-      .flags=SPI_DEVICE_HALFDUPLEX,
-      .duty_cycle_pos=128,
-   };
-   
-   ret=spi_bus_add_device(self->spihost, &devcfg_tft, &self->spi_tft);
-   if (ret != ESP_OK) {
-      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding TFT SPI device"));
-   }
 
    gpio_pad_select_gpio(self->dc);
    gpio_set_direction(self->dc, GPIO_MODE_OUTPUT);   
