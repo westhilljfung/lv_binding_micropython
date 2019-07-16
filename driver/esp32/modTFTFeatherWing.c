@@ -121,9 +121,9 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .mode=0,                             //SPI mode 0
       .spics_io_num=15,              //CS pin
       .queue_size=1,
-      .command_bits=8,
-      .flags=SPI_DEVICE_HALFDUPLEX,
-      .duty_cycle_pos=64,
+      //.command_bits=8,
+      //.flags=SPI_DEVICE_HALFDUPLEX,
+      //.duty_cycle_pos=64,
    };
 
    ret=spi_bus_add_device(HSPI_HOST, &devcfg, &spi);
@@ -134,18 +134,18 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    
    spi_transaction_t t;
    uint8_t read_data[4];
-   /* uint8_t write_data[4]; */
-   /* uint16_t i; */
+   uint8_t write_data[4];
+   uint16_t i;
 
-   /* for (i = 0; i < 4; i++) { */
-   /*    write_data[i] = 0x82; */
-   /* } */
+   for (i = 0; i < 4; i++) {
+      write_data[i] = 0x82;
+   }
    
    memset(&t, 0, sizeof(t));		//Zero out the transaction
    
-   /* t.length = 32; */
-   /* t.tx_buffer = write_data; */
-   t.cmd = 0x82;
+   t.length = 32;
+   t.tx_buffer = write_data;
+   /* t.cmd = 0x82; */
    t.rxlength = 32;
    t.rx_buffer = read_data;
 
@@ -154,7 +154,16 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    ESP_ERROR_CHECK(ret);
    
    printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3]);
-   t.cmd = 0x80;
+
+   for (i = 0; i < 4; i++) {
+      write_data[i] = 0x80;
+   }
+   
+   memset(&t, 0, sizeof(t));		//Zero out the transaction
+   
+   t.length = 32;
+   t.tx_buffer = write_data;
+   /* t.cmd = 0x82; */
    t.rxlength = 32;
    t.rx_buffer = read_data;
 
@@ -163,7 +172,16 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    ESP_ERROR_CHECK(ret);
    
    printf("Read Data: %x %x %x %x\n", read_data[0], read_data[1], read_data[2], read_data[3]);
-   t.cmd = 0x81;
+
+   for (i = 0; i < 4; i++) {
+      write_data[i] = 0x81;
+   }
+   
+   memset(&t, 0, sizeof(t));		//Zero out the transaction
+   
+   t.length = 32;
+   t.tx_buffer = write_data;
+   /* t.cmd = 0x82; */
    t.rxlength = 32;
    t.rx_buffer = read_data;
 
