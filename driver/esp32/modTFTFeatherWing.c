@@ -539,11 +539,11 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
         for (uint8_t j = 0; j < 8; ++j, data_out <<= 1) {
             gpio_set_level(12, (data_out >> 7) & 1);
 	    
-	    ets_delay_us(1);
+	    ets_delay_us(5);
 	    gpio_set_level(13, 1);
             data_in = (data_in << 1) | gpio_get_level(27);
 	    
-	    ets_delay_us(1);
+	    ets_delay_us(5);
 	    gpio_set_level(13, 0);
         }
 	read_data[i] = data_in;
