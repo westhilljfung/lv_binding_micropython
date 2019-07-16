@@ -480,17 +480,17 @@ STATIC void spi_bus_device_init(TFTFeatherWing_obj_t *self) {
  */
 STATIC void ts_init(TFTFeatherWing_obj_t *self) {
    
-   /* gpio_pad_select_gpio(self->miso); */
-   /* gpio_pad_select_gpio(self->mosi); */
-   /* gpio_pad_select_gpio(self->clk); */
-   /* gpio_pad_select_gpio(self->rcs); */
-   gpio_set_direction(self->miso, GPIO_MODE_INPUT);
-   gpio_set_direction(self->mosi, GPIO_MODE_OUTPUT);
-   gpio_set_direction(self->clk, GPIO_MODE_OUTPUT);
+   gpio_pad_select_gpio(27);
+   gpio_pad_select_gpio(12);
+   gpio_pad_select_gpio(13);
+   gpio_pad_select_gpio(self->rcs);
+   gpio_set_direction(27, GPIO_MODE_INPUT);
+   gpio_set_direction(12, GPIO_MODE_OUTPUT);
+   gpio_set_direction(13, GPIO_MODE_OUTPUT);
    gpio_set_direction(self->rcs, GPIO_MODE_OUTPUT);
-   /* gpio_set_pull_mode(self->miso, GPIO_PULLDOWN_ONLY); */
-   gpio_set_level(self->mosi, 0);
-   gpio_set_level(self->clk, 0);
+   gpio_set_pull_mode(27, GPIO_PULLDOWN_ONLY);
+   gpio_set_level(12, 0);
+   gpio_set_level(13, 0);
    gpio_set_level(self->rcs, 1);
       
    uint16_t ts_version;
@@ -537,14 +537,14 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
         uint8_t data_out = reg | 0x80;
         uint8_t data_in = 0;
         for (uint8_t j = 0; j < 8; ++j, data_out <<= 1) {
-            gpio_set_level(self->mosi, (data_out >> 7) & 1);
+            gpio_set_level(12, (data_out >> 7) & 1);
 	    
 	    ets_delay_us(1);
-	    gpio_set_level(self->clk, 1);
-            data_in = (data_in << 1) | gpio_get_level(self->miso);
+	    gpio_set_level(13, 1);
+            data_in = (data_in << 1) | gpio_get_level(12);
 	    
 	    ets_delay_us(1);
-	    gpio_set_level(self->clk, 0);
+	    gpio_set_level(13, 0);
         }
 	read_data[i] = data_in;
        
