@@ -7,6 +7,7 @@
 //#include "esp_system.h"
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
+#include "driver/spi_common.h"
 #include "lvgl/src/lv_hal/lv_hal_disp.h"
 //////////////////////////////////////////////////////////////////////////////
 // Module definition
