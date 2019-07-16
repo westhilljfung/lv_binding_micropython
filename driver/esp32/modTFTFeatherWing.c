@@ -246,17 +246,20 @@ STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
 STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in);
 STATIC mp_obj_t mp_activate_TFTFeatherWing(mp_obj_t self_in);
 
-STATIC void tft_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p);
+STATIC void tft_flush(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p);
+STATIC bool ts_read(lv_indev_drv_t * drv, lv_indev_data_t * data);
 
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_init_TFTFeatherWing_obj, mp_init_TFTFeatherWing);
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_activate_TFTFeatherWing_obj, mp_activate_TFTFeatherWing);
 DEFINE_PTR_OBJ(tft_flush);
+DEFINE_PTR_OBJ(ts_read);
 
 // TFTFeatherWing Class and methods
 STATIC const mp_rom_map_elem_t TFTFeatherWing_locals_dict_table[] = {
    { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&mp_init_TFTFeatherWing_obj) },
    { MP_ROM_QSTR(MP_QSTR_activate), MP_ROM_PTR(&mp_activate_TFTFeatherWing_obj) },
    { MP_ROM_QSTR(MP_QSTR_flush), MP_ROM_PTR(&PTR_OBJ(tft_flush)) },
+   { MP_ROM_QSTR(MP_QSTR_read), MP_ROM_PTR(&PTR_OBJ(ts_read)) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(TFTFeatherWing_locals_dict, TFTFeatherWing_locals_dict_table);
@@ -301,6 +304,10 @@ STATIC void spi_bus_device_init(TFTFeatherWing_obj_t *self);
 STATIC void ts_init(TFTFeatherWing_obj_t *self);
 STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg);
 STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg, const uint8_t val);
+STATIC void read_xyz(TFTFeatherWing_obj_t *self, const uint16_t * x, const uint16_t *y, const uint16_t *z);
+STATIC bool buffer_empty(TFTFeatherWing_obj_t *self);
+STATIC bool is_touched(TFTFeatherWing_obj_t *self);
+
 
 /**
  * TFT Function Prototype
@@ -391,14 +398,62 @@ STATIC mp_obj_t mp_activate_TFTFeatherWing(mp_obj_t self_in) {
 }
 
 STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
+   printf("Init\n");
    TFTFeatherWing_obj_t *self = MP_OBJ_TO_PTR(self_in);
    mp_activate_TFTFeatherWing(self_in);
      
    spi_bus_device_init(self);
    ts_init(self);
    tft_init(self);
-   
+   printf("End Init\n");
    return mp_const_none;
+}
+
+STATIC void tft_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p) {
+   //printf("Flush\n");
+   uint8_t data[4];
+
+   TFTFeatherWing_obj_t *self = g_TFTFeatherWing;
+
+   /*Column addresses*/
+   tft_send_cmd(self, HX8357_CASET);
+   data[0] = (area->x1 >> 8) & 0xFF;
+   data[1] = area->x1 & 0xFF;
+   data[2] = (area->x2 >> 8) & 0xFF;
+   data[3] = area->x2 & 0xFF;
+   tft_send_data(self, data, 4);
+
+   /*Page addresses*/
+   tft_send_cmd(self, HX8357_PASET);
+   data[0] = (area->y1 >> 8) & 0xFF;
+   data[1] = area->y1 & 0xFF;
+   data[2] = (area->y2 >> 8) & 0xFF;
+   data[3] = area->y2 & 0xFF;
+   tft_send_data(self, data, 4);
+
+   /*Memory write*/
+   tft_send_cmd(self, HX8357_RAMWR);
+
+   uint32_t size = (area->x2 - area->x1 + 1) * (area->y2 - area->y1 + 1);
+
+   tft_send_data(self, (void*)color_p, size * 2);
+
+   lv_disp_flush_ready(disp_drv);
+}
+
+
+STATIC bool ts_read(lv_indev_drv_t * drv, lv_indev_data_t * data) {
+   TFTFeatherWing_obj_t *self = g_TFTFeatherWing;
+   uint16_t x, y;
+   uint8_t z;
+   printf("ts_read\n");
+   while (!buffer_empty(self)) {
+      get_xyz(self, &x, &y, &z);
+   }
+
+   ts_write_register_byte(STMPE_INI_STA, 0xff);
+   
+   return false;
 }
 
 /**
@@ -421,25 +476,6 @@ STATIC void spi_bus_device_init(TFTFeatherWing_obj_t *self) {
    if (ret != ESP_OK) {
       nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed initializing SPI bus"));
    }
-   
-   /* //Attach the Touch Screen to the SPI bus */
-   /* spi_device_interface_config_t devcfg_ts={ */
-   /*    .clock_speed_hz=1000*1000, //Clock out at DISP_SPI_MHZ MHz */
-   /*    .mode=0,                             //SPI mode 0 */
-   /*    .spics_io_num=self->rcs,              //CS pin */
-   /*    .queue_size=1, */
-   /*    .pre_cb=NULL, */
-   /*    .post_cb=NULL, */
-   /*    //.flags=SPI_DEVICE_HALFDUPLEX, */
-   /*    .duty_cycle_pos=128, */
-   /*    //.command_bits=8, */
-   /*    //.dummy_bits=8, */
-   /* }; */
-
-   /* ret = spi_bus_add_device(self->spihost, &devcfg_ts, &self->spi_ts); */
-   /* if (ret != ESP_OK) { */
-   /*    nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding TS SPI device")); */
-   /* } */
 
     //Attach the TFT to the SPI bus
    spi_device_interface_config_t devcfg_tft={
@@ -457,13 +493,13 @@ STATIC void spi_bus_device_init(TFTFeatherWing_obj_t *self) {
    if (ret != ESP_OK) {
       nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding TFT SPI device"));
    }
-}
-
-/**
- * TS Function
- */
-STATIC void ts_init(TFTFeatherWing_obj_t *self) {
    
+   //GPIO for TFT data mode selection 
+   gpio_pad_select_gpio(self->dc);
+   gpio_set_direction(self->dc, GPIO_MODE_OUTPUT);   
+   gpio_set_level(self->dc, 0);
+   
+   //GPIO for bitbang spi for TS
    gpio_pad_select_gpio(self->ts_miso);
    gpio_pad_select_gpio(self->ts_mosi);
    gpio_pad_select_gpio(self->ts_clk);
@@ -478,7 +514,13 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
    gpio_set_level(self->ts_mosi, 0);
    gpio_set_level(self->ts_clk, 0);
    gpio_set_level(self->rcs, 1);
-      
+}
+
+/**
+ * TS Function
+ */
+STATIC void ts_init(TFTFeatherWing_obj_t *self) {
+   printf("TS Init\n");
    uint16_t ts_version;
 
    ts_version = ts_read_register_byte(self, 0);
@@ -507,10 +549,11 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
    ts_write_register_byte(self, STMPE_INT_STA, 0xFF); //reset all ints
    ts_write_register_byte(self, STMPE_INT_CTRL,
    			  STMPE_INT_CTRL_POL_HIGH | STMPE_INT_CTRL_ENABLE);
+   printf("End TS Init\n");
+   return;
 }
 
 STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg) {
-   printf("Read TS register\n");
    uint8_t read_data[2];
    uint8_t i, j, data_out, data_in;
    
@@ -568,6 +611,37 @@ STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg
    return;
 }
 
+STATIC void read_xyz(TFTFeatherWing_obj_t *self, const uint16_t * x, const uint16_t *y, const uint16_t *z) {
+   uint8_t data[4];
+   uint8_t i;
+   printf("read_xyz: ");
+   for (i = 0; i < 4; i++) {
+      data[i] = readRegister8(0xD7);
+      printf("%x ", data[i]);
+   }
+   printf("\n");
+   
+   *x = data[0];
+   *x <<= 4;
+   *x |= (data[1] >> 4);
+   
+   *y = data[1] & 0x0F;
+   *y <<= 8;
+   *y |= data[2];
+   
+   *z = data[3];
+
+   return;
+}
+
+STATIC bool buffer_empty(TFTFeatherWing_obj_t *self) {
+   return (ts_read_register_byte(STMPE_FIFO_STA) & STMPE_FIFO_STA_EMPTY);
+}
+
+STATIC bool is_touched(TFTFeatherWing_obj_t *self) {
+   return ts_read_register_byte(STMPE_TSC_CTRL) & 0x80);
+}
+
 /**
  * TFT Function
  */
@@ -579,10 +653,7 @@ typedef struct {
 } lcd_init_cmd_t;
 
 STATIC void tft_init(TFTFeatherWing_obj_t *self) {
-
-   gpio_pad_select_gpio(self->dc);
-   gpio_set_direction(self->dc, GPIO_MODE_OUTPUT);   
-   gpio_set_level(self->dc, 0);
+   printf("TFT Init\n");
    
    //Initialize non-SPI GPIOs   
    const lcd_init_cmd_t hx_init_cmds[]={
@@ -679,36 +750,4 @@ STATIC void tft_send_data(TFTFeatherWing_obj_t *self, const void * data, const u
    gpio_set_level(self->dc, 1);	 // Data mode
    tft_write(self, data, length);
    gpio_set_level(self->dc, 0);
-}
-
-STATIC void tft_flush(struct _disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p) {
-   //printf("Flush\n");
-   uint8_t data[4];
-
-   TFTFeatherWing_obj_t *self = g_TFTFeatherWing;
-
-   /*Column addresses*/
-   tft_send_cmd(self, HX8357_CASET);
-   data[0] = (area->x1 >> 8) & 0xFF;
-   data[1] = area->x1 & 0xFF;
-   data[2] = (area->x2 >> 8) & 0xFF;
-   data[3] = area->x2 & 0xFF;
-   tft_send_data(self, data, 4);
-
-   /*Page addresses*/
-   tft_send_cmd(self, HX8357_PASET);
-   data[0] = (area->y1 >> 8) & 0xFF;
-   data[1] = area->y1 & 0xFF;
-   data[2] = (area->y2 >> 8) & 0xFF;
-   data[3] = area->y2 & 0xFF;
-   tft_send_data(self, data, 4);
-
-   /*Memory write*/
-   tft_send_cmd(self, HX8357_RAMWR);
-
-   uint32_t size = (area->x2 - area->x1 + 1) * (area->y2 - area->y1 + 1);
-
-   tft_send_data(self, (void*)color_p, size * 2);
-
-   lv_disp_flush_ready(disp_drv);
 }
