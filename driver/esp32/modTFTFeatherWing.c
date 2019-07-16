@@ -480,10 +480,10 @@ STATIC void spi_bus_device_init(TFTFeatherWing_obj_t *self) {
  */
 STATIC void ts_init(TFTFeatherWing_obj_t *self) {
    
-   /* gpio_pad_select_gpio(self->miso);  */
-   /* gpio_pad_select_gpio(self->mosi);  */
-   /* gpio_pad_select_gpio(self->clk); */
-   /* gpio_pad_select_gpio(self->rcs); */
+   gpio_pad_select_gpio(self->miso);
+   gpio_pad_select_gpio(self->mosi);
+   gpio_pad_select_gpio(self->clk);
+   gpio_pad_select_gpio(self->rcs);
    /* gpio_set_direction(self->miso, GPIO_MODE_INPUT); */
    /* gpio_set_direction(self->mosi, GPIO_MODE_OUTPUT); */
    /* gpio_set_direction(self->clk, GPIO_MODE_OUTPUT); */
