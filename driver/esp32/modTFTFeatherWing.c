@@ -299,7 +299,7 @@ const mp_obj_module_t mp_module_TFTFeatherWing = {
 /**
  * Common Function Prototypr
  **/
-STATIC void spi_bus_init(TFTFeatherWing_obj_t *self);
+STATIC void spi_bus_device_init(TFTFeatherWing_obj_t *self);
 
 /**
  * TS Function Prototype
@@ -410,7 +410,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    TFTFeatherWing_obj_t *self = MP_OBJ_TO_PTR(self_in);
    mp_activate_TFTFeatherWing(self_in);
      
-   spi_bus_init(self);
+   spi_bus_device_init(self);
    ts_init(self);
    tft_init(self);
    
