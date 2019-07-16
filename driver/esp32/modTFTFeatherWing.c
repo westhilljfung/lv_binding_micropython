@@ -7,7 +7,6 @@
 //#include "esp_system.h"
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
-#include "driver/spi_common.h"
 #include "lvgl/src/lv_hal/lv_hal_disp.h"
 //////////////////////////////////////////////////////////////////////////////
 // Module definition
@@ -108,7 +107,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .sclk_io_num=14,
       .quadwp_io_num=-1,
       .quadhd_io_num=-1,
-      .flags= SPICOMMON_BUSFLAG_MASTER | SPICOMMON_BUSFLAG_SCLK | SPICOMMON_BUSFLAG_MISO | SPICOMMON_BUSFLAG_MOSI ,
+      .flags= SPICOMMON_BUSFLAG_MASTER | SPICOMMON_BUSFLAG_NATIVE_PINS | SPICOMMON_BUSFLAG_SCLK | SPICOMMON_BUSFLAG_MISO | SPICOMMON_BUSFLAG_MOSI,
    };
    
    ret=spi_bus_initialize(VSPI_HOST, &buscfg, 1);
