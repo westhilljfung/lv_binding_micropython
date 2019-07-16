@@ -102,11 +102,12 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    
    //Initialize the SPI bus
    spi_bus_config_t buscfg={
-      .miso_io_num=19,
-      .mosi_io_num=18,
-      .sclk_io_num=5,
+      .miso_io_num=12,
+      .mosi_io_num=13,
+      .sclk_io_num=14,
       .quadwp_io_num=-1,
       .quadhd_io_num=-1,
+      .flags= SPICOMMON_BUSFLAG_MASTER | SPICOMMON_BUSFLAG_IOMUX_PINS | SPICOMMON_BUSFLAG_SCLK | SPICOMMON_BUSFLAG_MISO | SPICOMMON_BUSFLAG_MOSI ,
    };
    
    ret=spi_bus_initialize(VSPI_HOST, &buscfg, 1);
@@ -115,9 +116,9 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    spi_device_handle_t spi;
    //Attach the Touch Screen to the SPI bus
    spi_device_interface_config_t devcfg={
-      .clock_speed_hz=1, //Clock out at 1 MHz
+      .clock_speed_hz=100, //Clock out at 1 MHz
       .mode=0,                             //SPI mode 0
-      .spics_io_num=32,              //CS pin
+      .spics_io_num=15,              //CS pin
       .queue_size=1,
       .command_bits=8,
       .flags=SPI_DEVICE_HALFDUPLEX,
