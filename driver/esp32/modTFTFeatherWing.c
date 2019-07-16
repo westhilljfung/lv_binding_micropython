@@ -516,7 +516,11 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
    
    gpio_set_level(self->rcs, 0);
    for ( i = 0; i < 2; ++i) {
-      data_out = reg | 0x80;
+      if (i == 0) {
+	 data_out = reg | 0x80;
+      } else {
+	 data_out = 0x00;
+      }
       data_in = 0;
       for ( j = 0; j < 8; ++j, data_out <<= 1) {
 	 gpio_set_level(self->ts_mosi, (data_out >> 7) & 1);
