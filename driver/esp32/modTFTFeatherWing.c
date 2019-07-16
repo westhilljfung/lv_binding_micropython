@@ -103,12 +103,13 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
    //Initialize the SPI bus
    spi_bus_config_t buscfg={
       .miso_io_num=12,
-      .mosi_io_num=13,
-      .sclk_io_num=14,
+      .mosi_io_num=14,
+      .sclk_io_num=13,
       .quadwp_io_num=-1,
       .quadhd_io_num=-1,
-      .flags= SPICOMMON_BUSFLAG_MASTER | SPICOMMON_BUSFLAG_NATIVE_PINS | SPICOMMON_BUSFLAG_SCLK | SPICOMMON_BUSFLAG_MISO | SPICOMMON_BUSFLAG_MOSI,
+      .flags= SPICOMMON_BUSFLAG_MASTER | SPICOMMON_BUSFLAG_SCLK | SPICOMMON_BUSFLAG_MISO | SPICOMMON_BUSFLAG_MOSI,
    };
+   //SPICOMMON_BUSFLAG_NATIVE_PINS
    
    ret=spi_bus_initialize(HSPI_HOST, &buscfg, 1);
    ESP_ERROR_CHECK(ret);
