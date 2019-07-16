@@ -531,7 +531,8 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
 STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg) {
    printf("Read TS register\n");
    uint8_t read_data[2];
-
+   
+   gpio_set_level(self->rcs, 0);
    for (uint8_t i = 0; i < 2; ++i) {
         uint8_t data_out = reg | 0x80;
         uint8_t data_in = 0;
@@ -549,6 +550,7 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
        
     }
    
+   gpio_set_level(self->rcs, 1);
    printf("Read Data: %x %x\n", read_data[0], read_data[1]);
 
    return read_data[1];
