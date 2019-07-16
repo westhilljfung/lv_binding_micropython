@@ -122,7 +122,7 @@ STATIC mp_obj_t mp_init_TFTFeatherWing(mp_obj_t self_in) {
       .queue_size=1,
       .command_bits=8,
       .flags=SPI_DEVICE_HALFDUPLEX,
-      //.duty_cycle_pos=192,
+      .duty_cycle_pos=64,
    };
 
    ret=spi_bus_add_device(HSPI_HOST, &devcfg, &spi);
