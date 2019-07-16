@@ -541,7 +541,7 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
 	    
 	    ets_delay_us(1);
 	    gpio_set_level(13, 1);
-            data_in = (data_in << 1) | gpio_get_level(12);
+            data_in = (data_in << 1) | gpio_get_level(27);
 	    
 	    ets_delay_us(1);
 	    gpio_set_level(13, 0);
