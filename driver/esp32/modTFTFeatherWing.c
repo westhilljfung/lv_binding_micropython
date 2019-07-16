@@ -539,15 +539,14 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
             gpio_set_level(self->mosi, (data_out >> 7) & 1);
 	    
 	    ets_delay_us(1);
-	    gpio_set_level(self->sck, 1);
-            data_in = (data_in << 1) | mp_hal_pin_read(self->miso);
+	    gpio_set_level(self->clk, 1);
+            data_in = (data_in << 1) | gpio_get_level(self->miso);
 	    
 	    ets_delay_us(1);
-	    gpio_set_level(self->sck, 0);
+	    gpio_set_level(self->clk, 0);
         }
-        if (dest != NULL) {
-            read_data[i] = data_in;
-        }
+	read_data[i] = data_in;
+       
     }
    
    printf("Read Data: %x %x\n", read_data[0], read_data[1]);
