@@ -214,27 +214,21 @@ typedef struct {
    mp_obj_base_t base;
   
    spi_device_handle_t spi_tft;
-   spi_device_handle_t spi_ts;
-   spi_device_handle_t spi_sd;
 
    uint8_t spihost;
-   uint8_t miso;
-   uint8_t mosi;
-   uint8_t clk;
+   uint8_t tft_miso;
+   uint8_t tft_mosi;
+   uint8_t tft_clk;
 
    uint8_t tft_mhz;
    uint8_t tcs;
    uint8_t dc;
-   uint8_t rst;
-   uint8_t backlight;
 
    uint8_t ts_mhz;
    uint8_t rcs;
-   uint8_t irq;
-   
-
-   uint8_t sd_mhz;
-   uint8_t scs;
+   uiit8_t ts_miso;
+   uint8_t ts_mosi;
+   uint8_t ts_clk;
   
 } TFTFeatherWing_obj_t;
 
@@ -307,7 +301,6 @@ STATIC void spi_bus_device_init(TFTFeatherWing_obj_t *self);
 STATIC void ts_init(TFTFeatherWing_obj_t *self);
 STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg);
 STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg, const uint8_t val);
-STATIC void ts_write_byte(TFTFeatherWing_obj_t *self, const uint8_t val);
 
 /**
  * TFT Function Prototype
@@ -328,45 +321,40 @@ STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
    enum{      
       ARG_spihost,
 	
-      ARG_miso,
-      ARG_mosi,
-      ARG_clk,
+      ARG_tft_miso,
+      ARG_tft_mosi,
+      ARG_tft_clk,
 
       ARG_tft_mhz,
       ARG_tcs,
       ARG_dc,
-      ARG_rst,
-      ARG_backlight,
 
       ARG_ts_mhz,
       ARG_rcs,
-      ARG_irq,
 
-      ARG_sd_mhz,
-      ARG_scs,
+      ARG_ts_miso,
+      ARG_ts_mosi,
+      ARG_ts_clk,
    };
 
    static const mp_arg_t allowed_args[] = {      
       { MP_QSTR_spihost,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=HSPI_HOST}},
 	
-      { MP_QSTR_miso,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=19}},
-      { MP_QSTR_mosi,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=18}},
-      { MP_QSTR_clk,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=5}},
+      { MP_QSTR_tft_miso,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=19}},
+      { MP_QSTR_tft_mosi,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=18}},
+      { MP_QSTR_tft_clk,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=5}},
 
       
       { MP_QSTR_tft_mhz,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=24}},
       { MP_QSTR_tcs,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=15}},
       { MP_QSTR_dc,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=33}},
-      { MP_QSTR_rst,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
-      { MP_QSTR_backlight,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
-
       
       { MP_QSTR_ts_mhz,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=1}},
       { MP_QSTR_rcs,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=32}},
-      { MP_QSTR_irq,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=-1}},
       
-      { MP_QSTR_sd_mhz,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=1}},
-      { MP_QSTR_scs,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=14}},
+      { MP_QSTR_ts_miso,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=27}},
+      { MP_QSTR_ts_mosi,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=12}},
+      { MP_QSTR_ts_clk,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=13}},
    };
 
    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
@@ -374,28 +362,24 @@ STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
    TFTFeatherWing_obj_t *self = m_new_obj(TFTFeatherWing_obj_t);
    
    self->base.type = type;
-   self->spi_ts = NULL;
    self->spi_tft = NULL;
-   self->spi_sd = NULL;
 
    self->spihost = args[ARG_spihost].u_int;
    
-   self->miso = args[ARG_miso].u_int;
-   self->mosi = args[ARG_mosi].u_int;
-   self->clk = args[ARG_clk].u_int;
+   self->tft_miso = args[ARG_tft_miso].u_int;
+   self->tft_mosi = args[ARG_tft_mosi].u_int;
+   self->tft_clk = args[ARG_tft_clk].u_int;
 
    self->tft_mhz = args[ARG_tft_mhz].u_int;
    self->tcs = args[ARG_tcs].u_int;
    self->dc = args[ARG_dc].u_int;
-   self->rst = args[ARG_rst].u_int;
-   self->backlight = args[ARG_backlight].u_int;
    
    self->ts_mhz = args[ARG_ts_mhz].u_int;
    self->rcs = args[ARG_rcs].u_int;
-   self->irq = args[ARG_irq].u_int;
    
-   self->sd_mhz = args[ARG_sd_mhz].u_int;
-   self->irq = args[ARG_irq].u_int;
+   self->ts_miso = args[ARG_ts_miso].u_int;
+   self->ts_mosi = args[ARG_ts_mosi].u_int;
+   self->ts_clk = args[ARG_ts_clk].u_int;
    
    return MP_OBJ_FROM_PTR(self);
 }
@@ -480,74 +464,72 @@ STATIC void spi_bus_device_init(TFTFeatherWing_obj_t *self) {
  */
 STATIC void ts_init(TFTFeatherWing_obj_t *self) {
    
-   gpio_pad_select_gpio(27);
-   gpio_pad_select_gpio(12);
-   gpio_pad_select_gpio(13);
+   gpio_pad_select_gpio(self->ts_miso);
+   gpio_pad_select_gpio(self->mosi);
+   gpio_pad_select_gpio(self->clk);
    gpio_pad_select_gpio(self->rcs);
-   gpio_set_direction(27, GPIO_MODE_INPUT);
-   gpio_set_direction(12, GPIO_MODE_OUTPUT);
-   gpio_set_direction(13, GPIO_MODE_OUTPUT);
+   
+   gpio_set_direction(self->ts_miso, GPIO_MODE_INPUT);
+   gpio_set_direction(self->ts_mosi, GPIO_MODE_OUTPUT);
+   gpio_set_direction(self->ts_clk, GPIO_MODE_OUTPUT);
    gpio_set_direction(self->rcs, GPIO_MODE_OUTPUT);
-   gpio_set_pull_mode(27, GPIO_PULLDOWN_ONLY);
-   gpio_set_level(12, 0);
-   gpio_set_level(13, 0);
+   gpio_set_pull_mode(self->ts_miso, GPIO_PULLDOWN_ONLY);
+   
+   gpio_set_level(self->ts_mosi, 0);
+   gpio_set_level(self->ts_clk, 0);
    gpio_set_level(self->rcs, 1);
       
    uint16_t ts_version;
 
-   /* gpio_set_level(32, 0); */
    ts_version = ts_read_register_byte(self, 0);
     
-   /* gpio_set_level(32, 1);    */
-   /* gpio_set_level(32, 0); */
-
    ts_version <<= 8;
    ts_version |= ts_read_register_byte(self, 1);
    printf("TS Version %x\n", ts_version);
 
-   /* gpio_set_level(32, 1); */
 
-   /* // Initialize STMPE610 */
-   /* ts_write_register_byte(self, STMPE_SYS_CTRL2, 0x0); turn on clocks! */
-   /* ts_write_register_byte(self, STMPE_TSC_CTRL, */
-   /* 			  STMPE_TSC_CTRL_XYZ | STMPE_TSC_CTRL_EN); XYZ and enable! */
-   /* ts_write_register_byte(self, STMPE_INT_EN, STMPE_INT_EN_TOUCHDET); */
-   /* ts_write_register_byte(self, STMPE_ADC_CTRL1, STMPE_ADC_CTRL1_10BIT | */
-   /* 			  (0x6 << 4)); 96 clocks per conversion */
-   /* ts_write_register_byte(self, STMPE_ADC_CTRL2, STMPE_ADC_CTRL2_6_5MHZ); */
-   /* ts_write_register_byte(self, STMPE_TSC_CFG, STMPE_TSC_CFG_4SAMPLE | */
-   /* 			  STMPE_TSC_CFG_DELAY_1MS | */
-   /* 			  STMPE_TSC_CFG_SETTLE_5MS); */
-   /* ts_write_register_byte(self, STMPE_TSC_FRACTION_Z, 0x6); */
-   /* ts_write_register_byte(self, STMPE_FIFO_TH, 1); */
-   /* ts_write_register_byte(self, STMPE_FIFO_STA, STMPE_FIFO_STA_RESET); */
-   /* ts_write_register_byte(self, STMPE_FIFO_STA, 0); unreset */
-   /* ts_write_register_byte(self, STMPE_TSC_I_DRIVE, STMPE_TSC_I_DRIVE_50MA); */
-   /* ts_write_register_byte(self, STMPE_INT_STA, 0xFF); reset all ints */
-   /* ts_write_register_byte(self, STMPE_INT_CTRL, */
-   /* 			  STMPE_INT_CTRL_POL_HIGH | STMPE_INT_CTRL_ENABLE); */
+   // Initialize STMPE610
+   ts_write_register_byte(self, STMPE_SYS_CTRL2, 0x0); turn on clocks!
+   ts_write_register_byte(self, STMPE_TSC_CTRL,
+   			  STMPE_TSC_CTRL_XYZ | STMPE_TSC_CTRL_EN); XYZ and enable!
+   ts_write_register_byte(self, STMPE_INT_EN, STMPE_INT_EN_TOUCHDET);
+   ts_write_register_byte(self, STMPE_ADC_CTRL1, STMPE_ADC_CTRL1_10BIT |
+   			  (0x6 << 4)); 96 clocks per conversion
+   ts_write_register_byte(self, STMPE_ADC_CTRL2, STMPE_ADC_CTRL2_6_5MHZ);
+   ts_write_register_byte(self, STMPE_TSC_CFG, STMPE_TSC_CFG_4SAMPLE |
+   			  STMPE_TSC_CFG_DELAY_1MS |
+   			  STMPE_TSC_CFG_SETTLE_5MS);
+   ts_write_register_byte(self, STMPE_TSC_FRACTION_Z, 0x6);
+   ts_write_register_byte(self, STMPE_FIFO_TH, 1);
+   ts_write_register_byte(self, STMPE_FIFO_STA, STMPE_FIFO_STA_RESET);
+   ts_write_register_byte(self, STMPE_FIFO_STA, 0); unreset
+   ts_write_register_byte(self, STMPE_TSC_I_DRIVE, STMPE_TSC_I_DRIVE_50MA);
+   ts_write_register_byte(self, STMPE_INT_STA, 0xFF); reset all ints
+   ts_write_register_byte(self, STMPE_INT_CTRL,
+   			  STMPE_INT_CTRL_POL_HIGH | STMPE_INT_CTRL_ENABLE);
 }
 
 STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg) {
    printf("Read TS register\n");
    uint8_t read_data[2];
+   uint8_t i, j, data_out, data_in;
    
    gpio_set_level(self->rcs, 0);
-   for (uint8_t i = 0; i < 2; ++i) {
-        uint8_t data_out = reg | 0x80;
-        uint8_t data_in = 0;
-        for (uint8_t j = 0; j < 8; ++j, data_out <<= 1) {
-            gpio_set_level(12, (data_out >> 7) & 1);
+   for ( i = 0; i < 2; ++i) {
+      data_out = reg | 0x80;
+      data_in = 0;
+      for ( j = 0; j < 8; ++j, data_out <<= 1) {
+	 gpio_set_level(self->ts_mosi, (data_out >> 7) & 1);
 	    
-	    ets_delay_us(2);
-	    gpio_set_level(13, 1);
-            data_in = (data_in << 1) | gpio_get_level(27);
+	 ets_delay_us(2);
+	 gpio_set_level(self->ts_clk, 1);
+	 data_in = (data_in << 1) | gpio_get_level(self->ts_miso);
 	    
-	    ets_delay_us(2);
-	    gpio_set_level(13, 0);
-        }
-	read_data[i] = data_in;       
-    }
+	 ets_delay_us(2);
+	 gpio_set_level(self->ts_clk, 0);
+      }
+      read_data[i] = data_in;       
+   }
    
    gpio_set_level(self->rcs, 1);
    printf("Read Data: %x %x\n", read_data[0], read_data[1]);
@@ -557,46 +539,29 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
 
 STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg, const uint8_t val) {
    printf("Write TS register\n");
-   esp_err_t ret;
- 
-   spi_transaction_t t;
-   uint8_t write_data[2];
-
-   write_data[0] = reg;
-   write_data[1] = val;
+   uint8_t data_out, i, j;
    
-   memset(&t, 0, sizeof(t));		//Zero out the transaction
-   //t.cmd = reg;
-   t.length = 16;              //Length is in bytes, transaction length is in bits.
-   t.tx_buffer = write_data;
+   gpio_set_level(self->rcs, 0);
+   for (i = 0; i < 2; ++i) {
+      if (i == 0) {
+	 data_out = reg;
+      } else {
+	 data_out = val;
+      }
+        for (j = 0; j < 8; ++j, data_out <<= 1) {
+            gpio_set_level(self->ts_mosi, (data_out >> 7) & 1);
+	    
+	    ets_delay_us(2);
+	    gpio_set_level(self->ts_clk, 1);
+	    
+	    ets_delay_us(2);
+	    gpio_set_level(self->ts_clk, 0);
+        }
+    }
+   
+   gpio_set_level(self->rcs, 1);
 
-   spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
-
-   spi_transaction_t * rt;
-   ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
-   if (ret != ESP_OK) {
-      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "TS Transation"));
-   }
-}
-
-STATIC void ts_write_byte(TFTFeatherWing_obj_t *self, const uint8_t val) {
-   printf("Write TS\n");
-   esp_err_t ret;
-   uint8_t write_data[1];
-
-   write_data[0] = val;
- 
-   spi_transaction_t t;
-   memset(&t, 0, sizeof(t));		//Zero out the transaction
-   t.length = 16;
-   t.tx_buffer = write_data;
-   spi_device_queue_trans(self->spi_ts, &t, portMAX_DELAY);
-
-   spi_transaction_t * rt;
-   ret=spi_device_get_trans_result(self->spi_ts, &rt, portMAX_DELAY);
-   if (ret != ESP_OK) {
-      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "TS Transation"));
-   }
+   return;
 }
 
 /**
