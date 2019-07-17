@@ -467,8 +467,9 @@ STATIC bool ts_read(lv_indev_drv_t * drv, lv_indev_data_t * data) {
       data->state = LV_INDEV_STATE_REL;
    }
    ts_write_register_byte(STMPE_INI_STA, 0xff);
-   
-   return false;
+   printf("ts_read: x: %d, y: %d, state: %d\n", data->point.x, data->point.y, data->state);
+
+   return false; //There is no data left
 }
 
 /**
@@ -650,11 +651,11 @@ STATIC void read_xyz(TFTFeatherWing_obj_t *self, const uint16_t * x, const uint1
 }
 
 STATIC bool buffer_empty(TFTFeatherWing_obj_t *self) {
-   return (ts_read_register_byte(STMPE_FIFO_STA) & STMPE_FIFO_STA_EMPTY);
+   return (ts_read_register_byte(self, STMPE_FIFO_STA) & STMPE_FIFO_STA_EMPTY);
 }
 
 STATIC bool is_touched(TFTFeatherWing_obj_t *self) {
-   return ts_read_register_byte(STMPE_TSC_CTRL) & 0x80);
+   return ts_read_register_byte((self, STMPE_TSC_CTRL) & 0x80);
 }
 
 /**
