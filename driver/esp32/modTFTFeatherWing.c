@@ -365,7 +365,7 @@ STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
       { MP_QSTR_tft_clk,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=5}},
 
       
-      { MP_QSTR_tft_mhz,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=24}},
+      { MP_QSTR_tft_mhz,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=40}},
       { MP_QSTR_tcs,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=15}},
       { MP_QSTR_dc,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=33}},
       
@@ -601,11 +601,11 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
       for ( j = 0; j < 8; ++j, data_out <<= 1) {
 	 gpio_set_level(self->ts_mosi, (data_out >> 7) & 1);
 	    
-	 ets_delay_us(2);
+	 //ets_delay_us(2);
 	 gpio_set_level(self->ts_clk, 1);
 	 data_in = (data_in << 1) | gpio_get_level(self->ts_miso);
 	    
-	 ets_delay_us(2);
+	 //ets_delay_us(2);
 	 gpio_set_level(self->ts_clk, 0);
       }
       read_data[i] = data_in;       
@@ -631,10 +631,10 @@ STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg
         for (j = 0; j < 8; ++j, data_out <<= 1) {
             gpio_set_level(self->ts_mosi, (data_out >> 7) & 1);
 	    
-	    ets_delay_us(2);
+	    //ets_delay_us(2);
 	    gpio_set_level(self->ts_clk, 1);
 	    
-	    ets_delay_us(2);
+	    //ets_delay_us(2);
 	    gpio_set_level(self->ts_clk, 0);
         }
     }
