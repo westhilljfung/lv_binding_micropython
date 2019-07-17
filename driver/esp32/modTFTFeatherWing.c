@@ -466,7 +466,7 @@ STATIC bool ts_read(lv_indev_drv_t * drv, lv_indev_data_t * data) {
       data->point.y = self->last_y;
       data->state = LV_INDEV_STATE_REL;
    }
-   ts_write_register_byte(STMPE_INI_STA, 0xff);
+   ts_write_register_byte(self, STMPE_INT_STA, 0xff);
    printf("ts_read: x: %d, y: %d, state: %d\n", data->point.x, data->point.y, data->state);
 
    return false; //There is no data left
@@ -627,12 +627,12 @@ STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg
    return;
 }
 
-STATIC void read_xyz(TFTFeatherWing_obj_t *self, const uint16_t * x, const uint16_t *y, const uint16_t *z) {
+STATIC void read_xyz(TFTFeatherWing_obj_t *self, uint16_t * x, uint16_t *y, uint16_t *z) {
    uint8_t data[4];
    uint8_t i;
    printf("read_xyz: ");
    for (i = 0; i < 4; i++) {
-      data[i] = readRegister8(0xD7);
+      data[i] = read_register_byte(self, 0xD7);
       printf("%x ", data[i]);
    }
    printf("\n");
@@ -655,7 +655,7 @@ STATIC bool buffer_empty(TFTFeatherWing_obj_t *self) {
 }
 
 STATIC bool is_touched(TFTFeatherWing_obj_t *self) {
-   return ts_read_register_byte((self, STMPE_TSC_CTRL) & 0x80);
+   return (ts_read_register_byte(self, STMPE_TSC_CTRL) & 0x80);
 }
 
 /**
