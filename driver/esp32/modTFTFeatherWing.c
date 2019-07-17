@@ -466,7 +466,7 @@ STATIC bool ts_read(lv_indev_drv_t * drv, lv_indev_data_t * data) {
    x = self->last_x;
    y = self->last_y;
    
-   printf("ts_read\n");
+   //printf("ts_read\n");
    if (is_touched(self)) {
       while (!buffer_empty(self)) {
 	 read_xyz(self, &y, &x, &z);
@@ -483,7 +483,7 @@ STATIC bool ts_read(lv_indev_drv_t * drv, lv_indev_data_t * data) {
       data->state = LV_INDEV_STATE_REL;
    }
    ts_write_register_byte(self, STMPE_INT_STA, 0xff);
-   printf("ts_read: x: %d, y: %d, state: %d\n", data->point.x, data->point.y, data->state);
+   //printf("ts_read: x: %d, y: %d, state: %d\n", data->point.x, data->point.y, data->state);
 
    return false; //There is no data left
 }
