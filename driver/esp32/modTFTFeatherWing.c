@@ -452,7 +452,6 @@ STATIC bool ts_read(lv_indev_drv_t * drv, lv_indev_data_t * data) {
    TFTFeatherWing_obj_t *self = g_TFTFeatherWing;
    uint16_t x, y;
    uint8_t z;
-   bool read_success = false;
 
    x = self->last_x;
    y = self->last_y;
