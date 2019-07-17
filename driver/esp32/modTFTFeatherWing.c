@@ -612,13 +612,13 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
    }
    
    gpio_set_level(self->rcs, 1);
-   printf("Read Data: %x %x\n", read_data[0], read_data[1]);
+   //printf("Read Data: %x %x\n", read_data[0], read_data[1]);
 
    return read_data[1];
 }
 
 STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg, const uint8_t val) {
-   printf("Write TS register\n");
+   //printf("Write TS register\n");
    uint8_t data_out, i, j;
    
    gpio_set_level(self->rcs, 0);
@@ -647,12 +647,12 @@ STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg
 STATIC void read_xyz(TFTFeatherWing_obj_t *self, uint16_t * x, uint16_t *y, uint8_t *z) {
    uint8_t data[4];
    uint8_t i;
-   printf("read_xyz: ");
+   //printf("read_xyz: ");
    for (i = 0; i < 4; i++) {
       data[i] = ts_read_register_byte(self, 0xD7);
-      printf("%x ", data[i]);
+      //printf("%x ", data[i]);
    }
-   printf("\n");
+   //printf("\n");
    
    *x = data[0];
    *x <<= 4;
@@ -664,7 +664,7 @@ STATIC void read_xyz(TFTFeatherWing_obj_t *self, uint16_t * x, uint16_t *y, uint
    
    *z = data[3];
 
-   return true;
+   return;
 }
 
 STATIC bool buffer_empty(TFTFeatherWing_obj_t *self) {
