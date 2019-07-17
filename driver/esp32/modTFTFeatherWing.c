@@ -208,8 +208,8 @@
 #define STMPE_GPIO_ALT_FUNCT 0x17
 
 /** Touchscreen convert **/
-#define TS_MINX 150
-#define TS_MINY 130
+#define TS_MINX 130
+#define TS_MINY 180
 #define TS_MAXX 3800
 #define TS_MAXY 4000
 
