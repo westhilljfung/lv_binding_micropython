@@ -229,6 +229,9 @@ typedef struct {
    uint8_t ts_miso;
    uint8_t ts_mosi;
    uint8_t ts_clk;
+
+   uint16_t last_x;
+   uint16_t last_y;
   
 } TFTFeatherWing_obj_t;
 
@@ -387,6 +390,9 @@ STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
    self->ts_miso = args[ARG_ts_miso].u_int;
    self->ts_mosi = args[ARG_ts_mosi].u_int;
    self->ts_clk = args[ARG_ts_clk].u_int;
+
+   self->last_x = 0;
+   self->last_y = 0;
    
    return MP_OBJ_FROM_PTR(self);
 }
@@ -446,11 +452,20 @@ STATIC bool ts_read(lv_indev_drv_t * drv, lv_indev_data_t * data) {
    TFTFeatherWing_obj_t *self = g_TFTFeatherWing;
    uint16_t x, y;
    uint8_t z;
+   
    printf("ts_read\n");
-   while (!buffer_empty(self)) {
-      get_xyz(self, &x, &y, &z);
+   if (is_touched) {
+      while (!buffer_empty(self)) {
+	 get_xyz(self, &x, &y, &z);
+      }
+      data->point.x = x;
+      data->point.y = y;
+      data->state = LV_INDEV_STATE_PR;
+   } else {
+      data->point.x = self->last_x;
+      data->point.y = self->last_y;
+      data->state = LV_INDEV_STATE_REL;
    }
-
    ts_write_register_byte(STMPE_INI_STA, 0xff);
    
    return false;
