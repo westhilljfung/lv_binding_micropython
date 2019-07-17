@@ -307,7 +307,7 @@ STATIC void spi_bus_device_init(TFTFeatherWing_obj_t *self);
 STATIC void ts_init(TFTFeatherWing_obj_t *self);
 STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg);
 STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg, const uint8_t val);
-STATIC void read_xyz(TFTFeatherWing_obj_t *self, uint16_t * x, uint16_t *y, uint16_t *z);
+STATIC void read_xyz(TFTFeatherWing_obj_t *self, uint16_t * x, uint16_t *y, uint8_t *z);
 STATIC bool buffer_empty(TFTFeatherWing_obj_t *self);
 STATIC bool is_touched(TFTFeatherWing_obj_t *self);
 
@@ -452,15 +452,22 @@ STATIC bool ts_read(lv_indev_drv_t * drv, lv_indev_data_t * data) {
    TFTFeatherWing_obj_t *self = g_TFTFeatherWing;
    uint16_t x, y;
    uint8_t z;
+   bool read_success = false;
+
+   x = self->last_x;
+   y = self->last_y;
    
    printf("ts_read\n");
    if (is_touched(self)) {
       while (!buffer_empty(self)) {
 	 read_xyz(self, &x, &y, &z);
       }
-      data->point.x = x;
-      data->point.y = y;
-      data->state = LV_INDEV_STATE_PR;
+	 data->point.x = x;
+	 data->point.y = y;
+	 data->state = LV_INDEV_STATE_PR;
+
+	 self->last_x = x;
+	 self->last_y = y;
    } else {
       data->point.x = self->last_x;
       data->point.y = self->last_y;
@@ -627,7 +634,7 @@ STATIC void ts_write_register_byte(TFTFeatherWing_obj_t *self, const uint8_t reg
    return;
 }
 
-STATIC void read_xyz(TFTFeatherWing_obj_t *self, uint16_t * x, uint16_t *y, uint16_t *z) {
+STATIC void read_xyz(TFTFeatherWing_obj_t *self, uint16_t * x, uint16_t *y, uint8_t *z) {
    uint8_t data[4];
    uint8_t i;
    printf("read_xyz: ");
@@ -647,7 +654,7 @@ STATIC void read_xyz(TFTFeatherWing_obj_t *self, uint16_t * x, uint16_t *y, uint
    
    *z = data[3];
 
-   return;
+   return true;
 }
 
 STATIC bool buffer_empty(TFTFeatherWing_obj_t *self) {
