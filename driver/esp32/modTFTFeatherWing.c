@@ -469,7 +469,7 @@ STATIC bool ts_read(lv_indev_drv_t * drv, lv_indev_data_t * data) {
    printf("ts_read\n");
    if (is_touched(self)) {
       while (!buffer_empty(self)) {
-	 read_xyz(self, &x, &y, &z);
+	 read_xyz(self, &y, &x, &z);
       }
       data->point.x = (((x - TS_MINX) * TFT_WIDTH) / (TS_MAXX - TS_MINX)) ;
       data->point.y = (((y - TS_MINY) * TFT_HEIGHT) / (TS_MAXY - TS_MINY));
