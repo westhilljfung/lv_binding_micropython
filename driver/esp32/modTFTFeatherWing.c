@@ -471,12 +471,12 @@ STATIC bool ts_read(lv_indev_drv_t * drv, lv_indev_data_t * data) {
       while (!buffer_empty(self)) {
 	 read_xyz(self, &x, &y, &z);
       }
-      data->point.x = (x / (TS_MAXX - TS_MINX)) * TFT_WIDTH;
-      data->point.y = (y / (TS_MAXY - TS_MINY)) * TFT_HEIGHT;
+      data->point.x = ((x * TFT_WIDTH) / (TS_MAXX - TS_MINX)) ;
+      data->point.y = ((y * TFT_HEIGHT) / (TS_MAXY - TS_MINY));
       data->state = LV_INDEV_STATE_PR;
 
-      self->last_x = x;
-      self->last_y = y;
+      self->last_x = data->point.x;
+      self->last_y = data->point.y;
    } else {
       data->point.x = self->last_x;
       data->point.y = self->last_y;
