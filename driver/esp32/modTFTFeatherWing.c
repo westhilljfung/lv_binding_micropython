@@ -207,6 +207,16 @@
 #define STMPE_GPIO_DIR 0x13
 #define STMPE_GPIO_ALT_FUNCT 0x17
 
+/** Touchscreen convert **/
+#define TS_MINX 150
+#define TS_MINY 130
+#define TS_MAXX 3800
+#define TS_MAXY 4000
+
+/** TFT Size **/
+#define TFT_WIDTH 480
+#define TFT_HEIGHT 320
+
 //////////////////////////////////////////////////////////////////////////////
 // Module definition
 //////////////////////////////////////////////////////////////////////////////
@@ -461,12 +471,12 @@ STATIC bool ts_read(lv_indev_drv_t * drv, lv_indev_data_t * data) {
       while (!buffer_empty(self)) {
 	 read_xyz(self, &x, &y, &z);
       }
-	 data->point.x = x;
-	 data->point.y = y;
-	 data->state = LV_INDEV_STATE_PR;
+      data->point.x = (x / (TS_MAXX - TS_MINX)) * TFT_WIDTH;
+      data->point.y = (y / (TSMAXY - TS_MINY)) * TFT_HEIGHT;
+      data->state = LV_INDEV_STATE_PR;
 
-	 self->last_x = x;
-	 self->last_y = y;
+      self->last_x = x;
+      self->last_y = y;
    } else {
       data->point.x = self->last_x;
       data->point.y = self->last_y;
