@@ -554,8 +554,7 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
 
    // Initialize STMPE610
    ts_write_register_byte(self, STMPE_SYS_CTRL2, 0x0); //turn on clocks!
-   ts_write_register_byte(self, STMPE_TSC_CTRL,
-   			  STMPE_TSC_CTRL_XYZ | STMPE_TSC_CTRL_EN);// XYZ and enable!
+   
    ts_write_register_byte(self, STMPE_INT_EN, STMPE_INT_EN_TOUCHDET);
    ts_write_register_byte(self, STMPE_ADC_CTRL1, STMPE_ADC_CTRL1_10BIT |
    			  (0x6 << 4)); //96 clocks per conversion
@@ -571,6 +570,8 @@ STATIC void ts_init(TFTFeatherWing_obj_t *self) {
    ts_write_register_byte(self, STMPE_INT_STA, 0xFF); //reset all ints
    ts_write_register_byte(self, STMPE_INT_CTRL,
    			  STMPE_INT_CTRL_POL_HIGH | STMPE_INT_CTRL_ENABLE);
+   ts_write_register_byte(self, STMPE_TSC_CTRL,
+   			  STMPE_TSC_CTRL_XYZ | STMPE_TSC_CTRL_EN);// XYZ and enable!
    printf("End TS Init\n");
    return;
 }
