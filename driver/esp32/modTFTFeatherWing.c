@@ -211,7 +211,7 @@
 #define TS_MINX 130
 #define TS_MINY 180
 #define TS_MAXX 3800
-#define TS_MAXY 4000
+#define TS_MAXY 3800
 
 /** TFT Size **/
 #define TFT_WIDTH 480
