@@ -505,12 +505,12 @@ STATIC void spi_bus_device_init(TFTFeatherWing_obj_t *self) {
    };
 
    ret = spi_bus_initialize(self->spihost, &buscfg, 1);
-   """
+   /*
    if (ret != ESP_ERR_INVALID_STATE || ret != ESP_OK) {
       // Assume bus is taken but in the right channels
       nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed initializing SPI bus"));
    }
-  """
+   */
 
     //Attach the TFT to the SPI bus
    spi_device_interface_config_t devcfg_tft={
