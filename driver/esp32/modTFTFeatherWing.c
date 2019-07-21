@@ -365,7 +365,7 @@ STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
       { MP_QSTR_tft_clk,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=5}},
 
       
-      { MP_QSTR_tft_mhz,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=40}},
+      { MP_QSTR_tft_mhz,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=24}},
       { MP_QSTR_tcs,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=15}},
       { MP_QSTR_dc,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=33}},
       
@@ -514,6 +514,7 @@ STATIC void spi_bus_device_init(TFTFeatherWing_obj_t *self) {
 
     //Attach the TFT to the SPI bus
    spi_device_interface_config_t devcfg_tft={
+      /*
       .clock_speed_hz=self->tft_mhz*1000*1000, //Clock out at DISP_SPI_MHZ MHz
       .mode=0,                             //SPI mode 0
       .spics_io_num=self->tcs,              //CS pin
@@ -523,7 +524,7 @@ STATIC void spi_bus_device_init(TFTFeatherWing_obj_t *self) {
       .flags=SPI_DEVICE_HALFDUPLEX,
       .duty_cycle_pos=128,
    };
-   
+      */
    ret = spi_bus_add_device(self->spihost, &devcfg_tft, &self->spi_tft);
    if (ret != ESP_OK) {
       nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed adding TFT SPI device"));
@@ -756,7 +757,6 @@ STATIC void tft_init(TFTFeatherWing_obj_t *self) {
 }
 
 STATIC void tft_write(TFTFeatherWing_obj_t *self, const uint8_t * data, const uint16_t length) {
-   printf("tft_write\n");
    if (length == 0) {
       return;           //no need to send anything
    }
