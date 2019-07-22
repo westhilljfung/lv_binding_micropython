@@ -358,7 +358,7 @@ STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
    };
 
    static const mp_arg_t allowed_args[] = {      
-      { MP_QSTR_spihost,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=HSPI_HOST}},
+      { MP_QSTR_spihost,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=VSPI_HOST}},
 	
       { MP_QSTR_tft_miso,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=19}},
       { MP_QSTR_tft_mosi,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=23}},
@@ -493,27 +493,24 @@ STATIC bool ts_read(lv_indev_drv_t * drv, lv_indev_data_t * data) {
  **/
 STATIC void spi_bus_device_init(TFTFeatherWing_obj_t *self) {
    esp_err_t ret;
-   /*
    //Initialize the SPI bus
    spi_bus_config_t buscfg={
-   .miso_io_num=self->tft_miso,
-   .mosi_io_num=self->tft_mosi,
-   .sclk_io_num=self->tft_clk,
-   .quadwp_io_num=-1,
-   .quadhd_io_num=-1,
-   .max_transfer_sz=128*1024,
+      .miso_io_num=self->tft_miso,
+      .mosi_io_num=self->tft_mosi,
+      .sclk_io_num=self->tft_clk,
+      .quadwp_io_num=-1,
+      .quadhd_io_num=-1,
+      .max_transfer_sz=128*1024,
    };
    
    ret = spi_bus_initialize(self->spihost, &buscfg, 1);
-   */  
-   /*
-     if (ret != ESP_ERR_INVALID_STATE || ret != ESP_OK) {
-     // Assume bus is taken but in the right channels
-     nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed initializing SPI bus"));
-     }
-   */
    
-    //Attach the TFT to the SPI bus
+   if (ret != ESP_OK) {
+      // Assume bus is taken but in the right channels
+      nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed initializing SPI bus"));
+   }
+   
+   //Attach the TFT to the SPI bus
    spi_device_interface_config_t devcfg_tft={
       
       .clock_speed_hz=self->tft_mhz*1000*1000, //Clock out at DISP_SPI_MHZ MHz
