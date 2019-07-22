@@ -373,7 +373,7 @@ STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
       { MP_QSTR_rcs,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=32}},
       
       { MP_QSTR_ts_miso,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=22}},
-      { MP_QSTR_ts_mosi,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=21}},
+      { MP_QSTR_ts_mosi,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=36}},
       { MP_QSTR_ts_clk,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=27}},
    };
 
@@ -483,7 +483,7 @@ STATIC bool ts_read(lv_indev_drv_t * drv, lv_indev_data_t * data) {
       data->state = LV_INDEV_STATE_REL;
    }
    ts_write_register_byte(self, STMPE_INT_STA, 0xff);
-   //printf("ts_read: x: %d, y: %d, state: %d\n", data->point.x, data->point.y, data->state);
+   printf("ts_read: x: %d, y: %d, state: %d\n", data->point.x, data->point.y, data->state);
 
    return false; //There is no data left
 }
@@ -506,7 +506,6 @@ STATIC void spi_bus_device_init(TFTFeatherWing_obj_t *self) {
    ret = spi_bus_initialize(self->spihost, &buscfg, 2);
    
    if (ret != ESP_OK) {
-      // Assume bus is taken but in the right channels
       nlr_raise(mp_obj_new_exception_msg(&mp_type_RuntimeError, "Failed initializing SPI bus"));
    }
    
