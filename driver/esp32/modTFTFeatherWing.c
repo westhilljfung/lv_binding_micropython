@@ -361,20 +361,20 @@ STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
       { MP_QSTR_spihost,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=HSPI_HOST}},
 	
       { MP_QSTR_tft_miso,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=19}},
-      { MP_QSTR_tft_mosi,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=18}},
-      { MP_QSTR_tft_clk,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=5}},
+      { MP_QSTR_tft_mosi,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=23}},
+      { MP_QSTR_tft_clk,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=18}},
 
       
-      { MP_QSTR_tft_mhz,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=24}},
-      { MP_QSTR_tcs,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=15}},
+      { MP_QSTR_tft_mhz,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=40}},
+      { MP_QSTR_tcs,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=5}},
       { MP_QSTR_dc,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=33}},
       
       { MP_QSTR_ts_mhz,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=1}},
       { MP_QSTR_rcs,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=32}},
       
-      { MP_QSTR_ts_miso,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=27}},
-      { MP_QSTR_ts_mosi,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=12}},
-      { MP_QSTR_ts_clk,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=13}},
+      { MP_QSTR_ts_miso,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=22}},
+      { MP_QSTR_ts_mosi,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=21}},
+      { MP_QSTR_ts_clk,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=27}},
    };
 
    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
