@@ -483,7 +483,7 @@ STATIC bool ts_read(lv_indev_drv_t * drv, lv_indev_data_t * data) {
       data->state = LV_INDEV_STATE_REL;
    }
    ts_write_register_byte(self, STMPE_INT_STA, 0xff);
-   printf("ts_read: x: %d, y: %d, state: %d\n", data->point.x, data->point.y, data->state);
+   //printf("ts_read: x: %d, y: %d, state: %d\n", data->point.x, data->point.y, data->state);
 
    return false; //There is no data left
 }
@@ -613,7 +613,7 @@ STATIC uint8_t ts_read_register_byte(TFTFeatherWing_obj_t *self, const uint8_t r
    }
    
    gpio_set_level(self->rcs, 1);
-   printf("Read Data: %x %x\n", read_data[0], read_data[1]);
+   //printf("Read Data: %x %x\n", read_data[0], read_data[1]);
 
    return read_data[1];
 }
