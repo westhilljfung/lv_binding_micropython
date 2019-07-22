@@ -372,8 +372,8 @@ STATIC mp_obj_t TFTFeatherWing_make_new(const mp_obj_type_t *type,
       { MP_QSTR_ts_mhz,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=1}},
       { MP_QSTR_rcs,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=32}},
       
-      { MP_QSTR_ts_miso,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=22}},
-      { MP_QSTR_ts_mosi,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=36}},
+      { MP_QSTR_ts_miso,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=36}},
+      { MP_QSTR_ts_mosi,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=22}},
       { MP_QSTR_ts_clk,MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int=27}},
    };
 
